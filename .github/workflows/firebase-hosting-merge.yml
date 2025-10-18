@@ -9,6 +9,9 @@ on:
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
+    env:
+      VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+
     steps:
       - uses: actions/checkout@v4
       - uses: FirebaseExtended/action-hosting-deploy@v0
@@ -17,3 +20,5 @@ jobs:
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CALENDARPROJECT_F570E }}
           channelId: live
           projectId: calendarproject-f570e
+env:
+  VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
