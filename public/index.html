@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendar</title>
+  
+  <link rel="stylesheet" href="style/style.css">
+</head>
+<body>
+  <h1>🗓 UniDeadline</h1>
+
+  <!-- ปฏิทินทั้งหน้า -->
+  <div id="calendar">
+    <div class="calendar-header">
+      <button id="prev-month">&lt;</button>
+      <h2 id="month-year">ตุลาคม 2025</h2>
+      <button id="next-month">&gt;</button>
+    </div>
+    <div class="calendar-grid">
+      <!-- แถววันในสัปดาห์ -->
+      <div class="day-name">อา</div>
+      <div class="day-name">จ</div>
+      <div class="day-name">อ</div>
+      <div class="day-name">พ</div>
+      <div class="day-name">พฤ</div>
+      <div class="day-name">ศ</div>
+      <div class="day-name">ส</div>
+
+      <!-- วันของเดือน จะเติมด้วย JS หรือเว้นว่างตอนนี้ -->
+    </div>
+  </div>
+
+  <script src="./script/script.js"></script>
+</body>
+</html>
