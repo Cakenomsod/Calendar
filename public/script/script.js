@@ -41,7 +41,7 @@ function generateMonthHTML(dateObj, highlightToday = false) {
 
   // วันก่อนหน้า
   for (let i = firstDay - 1; i >= 0; i--) {
-    html += `<div class="calendar-day other-month">${daysInPrevMonth - i}</div>`;
+    html += `<div class="border"><div class="calendar-day other-month">${daysInPrevMonth - i}</div></div>`;
   }
 
   // วันปกติ
@@ -52,16 +52,16 @@ function generateMonthHTML(dateObj, highlightToday = false) {
                     year === today.getFullYear();
     const dayOfWeek = new Date(year, month, day).getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-    html += `<div class="calendar-day ${isWeekend ? 'weekend' : ''} ${isToday ? 'selected' : ''}">
+    html += `<div class="border"><div class="calendar-day ${isWeekend ? 'weekend' : ''} ${isToday ? 'selected' : ''}">
                ${isToday ? `<span class="today-number">${day}</span>` : day}
-             </div>`;
+             </div></div>`;
   }
 
   // เติมช่องหลังเดือน
   const totalCells = firstDay + daysInMonth;
   const remaining = Math.ceil(totalCells / 7) * 7 - totalCells;
   for (let i = 1; i <= remaining; i++) {
-    html += `<div class="calendar-day other-month">${i}</div>`;
+    html += `<div class="border"><div class="calendar-day other-month">${i}</div></div>`;
   }
 
   html += '</div>';
