@@ -11,6 +11,8 @@ function init() {
   setupEventListeners();
 }
 
+
+// ✅ ย้ายขึ้นมาก่อน setupEventListeners
 function nextMonth() {
   currentDate.setMonth(currentDate.getMonth() + 1);
   renderCalendar('next');
@@ -20,7 +22,6 @@ function prevMonth() {
   currentDate.setMonth(currentDate.getMonth() - 1);
   renderCalendar('prev');
 }
-
 
 // ตั้ง event
 function setupEventListeners() {
@@ -36,27 +37,19 @@ function setupEventListeners() {
     }
   };
 
-
-
   // Scroll เมาส์ขึ้น/ลงเพื่อเปลี่ยนเดือน
   window.addEventListener('wheel', (e) => {
-    if (e.deltaY > 0) {
-      nextMonth();
-    } else if (e.deltaY < 0) {
-      prevMonth();
-    }
+    if (e.deltaY > 0) nextMonth();
+    else if (e.deltaY < 0) prevMonth();
   });
 
   // ลูกศรซ้าย/ขวา
   window.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowRight') {
-      nextMonth();
-    } else if (e.key === 'ArrowLeft') {
-      prevMonth();
-    }
+    if (e.key === 'ArrowRight') nextMonth();
+    else if (e.key === 'ArrowLeft') prevMonth();
   });
 
-  // 👇 เพิ่มส่วนนี้สำหรับ gesture บนมือถือ
+  // 👇 gesture ปัดซ้าย–ขวา
   const calendarContainer = document.getElementById('calendarContent');
   let touchStartX = 0;
   let touchEndX = 0;
@@ -67,20 +60,13 @@ function setupEventListeners() {
 
   calendarContainer.addEventListener('touchend', (e) => {
     touchEndX = e.changedTouches[0].screenX;
-    handleSwipeGesture();
-  });
-
-  function handleSwipeGesture() {
     const swipeDistance = touchEndX - touchStartX;
 
-    // ปัดขวา → เดือนก่อน
-    if (swipeDistance > 80) {
-      renderCalendar('prev'); // ปัดขวา
-    } else if (swipeDistance < -80) {
-      renderCalendar('next'); // ปัดซ้าย
-    }
-  }
+    if (swipeDistance > 80) prevMonth();      // ปัดขวา → เดือนก่อนหน้า
+    else if (swipeDistance < -80) nextMonth(); // ปัดซ้าย → เดือนถัดไป
+  });
 }
+
 
 
 // render ปฏิทินแบบเดือน
