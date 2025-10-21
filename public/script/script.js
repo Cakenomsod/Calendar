@@ -11,6 +11,17 @@ function init() {
   setupEventListeners();
 }
 
+function nextMonth() {
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  renderCalendar('next');
+}
+
+function prevMonth() {
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  renderCalendar('prev');
+}
+
+
 // ตั้ง event
 function setupEventListeners() {
   document.getElementById('currentMonth').addEventListener('click', showMonthModal);
@@ -25,15 +36,7 @@ function setupEventListeners() {
     }
   };
 
-  function nextMonth() {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    renderCalendar('next');
-  }
 
-  function prevMonth() {
-    currentDate.setMonth(currentDate.getMonth() - 1);
-    renderCalendar('prev');
-  }
 
   // Scroll เมาส์ขึ้น/ลงเพื่อเปลี่ยนเดือน
   window.addEventListener('wheel', (e) => {
