@@ -12,7 +12,6 @@ function init() {
 }
 
 
-// ✅ ย้ายขึ้นมาก่อน setupEventListeners
 function nextMonth() {
   currentDate.setMonth(currentDate.getMonth() + 1);
   renderCalendar('next');
