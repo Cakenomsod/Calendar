@@ -27,22 +27,42 @@ header {
     transition: color 0.3s;
 }
 
+#calendarContent {
+  overflow: hidden;
+  width: 100%;
+}
+
+#calendarContentWrapper {
+  display: flex;
+  width: 100%; 
+  transform: translateX(-100%); /* เริ่มที่เดือนกลาง */
+  transition: transform 0.3s ease;
+}
+
+.calendar-month {
+  width: 100%;
+    flex-shrink: 0;
+}
+
+
 .calendar-container{
     background: white;
     padding: 20px;
     border-radius: 20px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    width: 100%; 
+    width: 95%; 
 }
 
-
-
 .current-Month{
+    flex: 0 0 100%; /* fix width เป็น 100% ของ container */
+    box-sizing: border-box; /* รวม padding กับ border ใน width */
     font-size: 28px;
     font-weight: 600;
     color: #333;
     margin-bottom: 15px;
     text-align: center;
+
+    cursor: pointer;
 }
 
 .day {
@@ -52,18 +72,35 @@ header {
     gap: 10px;
     margin: 10px 0 20px 0;
     padding: 0px 0px 20px 0px;
-    border-bottom: 4px solid #e0e0e0;
+    
 }
 
 .weekend {
     color: #ff4d4d;
 }
 
+
 .calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  text-align: center;
-  transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    text-align: center;
+    transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
+  
+}
+
+.border{
+    box-shadow: inset 0 4px 0 0 #e0e0e0;
+
+}
+
+
+
+.calendar-day {
+    position: relative;
+    padding-top: 2.5%;
+    height: 90px;
+    border-radius: 10px;
+    transition: 0.2s;  
 }
 
 .calendar-day:hover {
@@ -71,37 +108,25 @@ header {
     cursor: pointer;
 }
 
-.calendar-day {
-    position: relative;
-    padding-top: 5%;
-    height: 90px;
-    border-radius: 10px;
-
-    transition: 0.2s;
-
-  
+.calendar-day.selected {
+  border: 4px solid #676c85;
 }
 
-.calendar-day::before {
-    content: attr(data-day);
-    position: absolute;
-    top: 6px;
-    left: 6px;
-    font-size: 14px;
-    font-weight: 600;
+.today-number {
+  display: inline-block;
+  background-color: black;
+  color: white;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 16px;
 }
 
 
-.today {
-    border: 4px solid #676c85;
-    font-weight: bold;
-}
 
 .other-month {
-    color: #ccc;
+    color: #ababab;
 }
-
-
 
 .month-item {
     padding: 30px;
@@ -118,7 +143,6 @@ header {
     color: white;
     transform: translateY(-5px);
 }
-
 
 .modal {
     display: none;
@@ -139,19 +163,19 @@ header {
 
 .modal-content {
     background: white;
-    padding: 30px;
+    padding: 50px;
     border-radius: 15px;
-    max-width: 400px;
+    max-width: 50%;
     width: 90%;
-    max-height: 80vh;
+    max-height: 40%;
     overflow-y: auto;
 }
 
 .modal-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
-    margin-top: 20px;
+    gap: 2.5%;
+    margin-top: 5%;
 }
 
 .modal-item {
@@ -170,7 +194,7 @@ header {
 
 .modal-close {
     float: right;
-    font-size: 24px;
+    font-size: 36px;
     cursor: pointer;
     color: #999;
 }
@@ -179,15 +203,8 @@ header {
     color: #333;
 }
 
-.slide-left {
-  transform: translateX(-100%);
-  opacity: 0;
-}
 
-.slide-right {
-  transform: translateX(100%);
-  opacity: 0;
-}
+
 
 @media (max-width: 768px) {
     .calendar-container {
