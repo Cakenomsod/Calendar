@@ -1,6 +1,5 @@
 import { auth } from "./script/firebase.js";
-import { onAuthStateChanged, signInWithCustomToken } 
-  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
 // ตรวจสอบว่าเคยมี token ใน localStorage จาก login site มั้ย
 async function checkLogin() {
