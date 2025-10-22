@@ -5,13 +5,14 @@ import { collection, addDoc, getDocs, query, where, serverTimestamp } from "http
 let currentUser = null;
 
 // ------------------- ตรวจสอบการล็อกอิน -------------------
-onAuthStateChanged(auth, async (user) => {
-  if (user) {
-    currentUser = user;
-    console.log("✅ ล็อกอินแล้ว:", user.displayName);
-  } else {
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
     console.warn("❌ ยังไม่ได้ล็อกอิน → เด้งไปหน้า login");
-    window.location.href = "https://calendar-login.web.app/";
+    setTimeout(() => {
+      window.location.href = "https://calendar-login.web.app/";
+    }, 800); // หน่วง 0.8 วิ
+  } else {
+    console.log("✅ ล็อกอินแล้ว:", user.displayName);
   }
 });
 
