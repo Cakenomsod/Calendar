@@ -1,15 +1,8 @@
-// Import core
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-analytics.js";
-
-// Firestore & Storage
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
-
-// Auth
 import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
-// Config
 const firebaseConfig = {
   apiKey: "AIzaSyCmIfvAGrk-rRCtYxCp3XmnUM61mKUtgsY",
   authDomain: "calendarproject-f570e.firebaseapp.com",
@@ -20,11 +13,7 @@ const firebaseConfig = {
   measurementId: "G-NTQYQJVBVN"
 };
 
-// Initialize
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
-// Export all Firebase services
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 export const auth = getAuth(app);

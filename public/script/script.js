@@ -1,20 +1,60 @@
-import { auth, db } from "./firebase.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { collection, addDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { auth } from "./script/firebase.js";
+import { onAuthStateChanged, signInWithCustomToken } 
+  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
-let currentUser = null;
+// ตรวจสอบว่าเคยมี token ใน localStorage จาก login site มั้ย
+async function checkLogin() {
+  return new Promise((resolve) => {
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        console.log("✅ ล็อกอินแล้ว:", user.displayName);
+        resolve(user);
+      } else {
+        console.log("❌ ยังไม่ได้ล็อกอิน → ขอ token จาก login site");
+        await handleCrossDomainLogin();
+        resolve(null);
+      }
+    });
+  });
+}
 
-// ------------------- ตรวจสอบการล็อกอิน -------------------
-onAuthStateChanged(auth, (user) => {
-  if (!user) {
-    console.warn("❌ ยังไม่ได้ล็อกอิน → เด้งไปหน้า login");
-    setTimeout(() => {
-      window.location.href = "https://calendar-login.web.app/";
-    }, 800); // หน่วง 0.8 วิ
-  } else {
-    console.log("✅ ล็อกอินแล้ว:", user.displayName);
+// ฟังก์ชันนี้จะพาผู้ใช้ไป login site พร้อม redirect กลับ
+async function handleCrossDomainLogin() {
+  const redirectURL = encodeURIComponent(window.location.href);
+  const loginURL = `https://calendar-login.web.app/?redirect=${redirectURL}`;
+
+  // พยายามเปิด popup ถ้าไม่ได้ ให้ redirect ไปเลย
+  const loginPopup = window.open(loginURL, "loginPopup", "width=600,height=600");
+
+  // ถ้า popup ถูกบล็อก → redirect แบบเต็มหน้าแทน
+  if (!loginPopup) {
+    window.location.href = loginURL;
+    return;
   }
-});
+
+  // รอรับ token จาก login site
+  window.addEventListener("message", async (event) => {
+    if (event.origin !== "https://calendar-login.web.app") return;
+    if (event.data?.type === "authSuccess") {
+      const token = event.data.token;
+      console.log("✅ ได้รับ token จาก login site");
+
+      // ใช้ token นี้ล็อกอินใน domain ปัจจุบัน
+      try {
+        await signInWithCustomToken(auth, token);
+        console.log("✅ ลงชื่อเข้าใช้สำเร็จใน Home site");
+        window.location.reload();
+      } catch (error) {
+        console.error("Custom token sign-in failed:", error);
+      }
+    }
+  });
+
+  // ส่งข้อความไปขอ token เผื่อ login site มี user อยู่แล้ว
+  loginPopup.postMessage({ type: "requestAuthToken" }, "https://calendar-login.web.app");
+}
+
+checkLogin();
 
 
 const thaiMonths = [
