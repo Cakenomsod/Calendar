@@ -137,11 +137,7 @@ function modalPrevDay() {
   updateModalDate();
 }
 
-function handleModalScroll(e) {
-  e.preventDefault();
-  if (e.deltaY > 0) modalNextDay();
-  else if (e.deltaY < 0) modalPrevDay();
-}
+
 
 function updateModalDate() {
   renderActivityInModal();
