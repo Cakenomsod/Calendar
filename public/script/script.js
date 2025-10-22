@@ -1,3 +1,21 @@
+import { auth, db } from "./firebase.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { collection, addDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+let currentUser = null;
+
+// ------------------- ตรวจสอบการล็อกอิน -------------------
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    currentUser = user;
+    console.log("✅ ล็อกอินแล้ว:", user.displayName);
+  } else {
+    console.warn("❌ ยังไม่ได้ล็อกอิน → เด้งไปหน้า login");
+    window.location.href = "https://calendar-login.web.app/";
+  }
+});
+
+
 const thaiMonths = [
   'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
   'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'

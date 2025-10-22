@@ -1,16 +1,15 @@
+// Import core
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-analytics.js";
 
+// Firestore & Storage
+import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-storage.js";
 
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
+// Auth
+import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Config
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: "calendarproject-f570e.firebaseapp.com",
@@ -21,12 +20,11 @@ const firebaseConfig = {
   measurementId: "G-NTQYQJVBVN"
 };
 
-// Initialize Firebase
+// Initialize
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
-// Initialize Firestore
+// Export all Firebase services
 export const db = getFirestore(app);
-
-// Initialize Storage
 export const storage = getStorage(app);
+export const auth = getAuth(app);
