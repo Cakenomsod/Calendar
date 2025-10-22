@@ -469,4 +469,8 @@ function setupEventListeners() {
   });
 }
 
-init();
+// เริ่มทำงานหลัง DOM โหลดครบ
+document.addEventListener("DOMContentLoaded", () => {
+  init();
+});
+
