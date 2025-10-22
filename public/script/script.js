@@ -294,14 +294,6 @@ function handleModalScroll(e) {
   });
 }
 
-// ------------------- ปิด modal -------------------
-function closeActivityModal() {
-  const modal = document.getElementById('activityModal');
-  modal.classList.remove('active');
-  modal.removeEventListener('wheel', handleModalScroll);
-  document.body.style.overflow = ''; // คืน scroll
-}
-
 // ------------------- เลื่อนเดือน -------------------
 function nextMonth() {
   const wrapper = document.getElementById('calendarContentWrapper');

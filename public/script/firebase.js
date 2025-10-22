@@ -11,7 +11,7 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth
 
 // Config
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  apiKey: "AIzaSyCmIfvAGrk-rRCtYxCp3XmnUM61mKUtgsY",
   authDomain: "calendarproject-f570e.firebaseapp.com",
   projectId: "calendarproject-f570e",
   storageBucket: "calendarproject-f570e.firebasestorage.app",
