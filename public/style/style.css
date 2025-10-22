@@ -45,6 +45,8 @@ header {
 }
 
 
+
+
 .calendar-container{
     background: white;
     padding: 20px;
@@ -65,12 +67,26 @@ header {
     cursor: pointer;
 }
 
+.current-Year{
+
+    flex: 0 0 100%;
+    box-sizing: border-box;
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+    text-align: center;
+
+    cursor: pointer;
+
+}
+
 .day {
     font-size: 20px;
     display: flex;
     justify-content: space-around;
     gap: 10px;
-    margin: 10px 0 20px 0;
+
     padding: 0px 0px 20px 0px;
     
 }
@@ -128,6 +144,10 @@ header {
     color: #ababab;
 }
 
+.other-Year {
+    color: #ababab;
+}
+
 .month-item {
     padding: 30px;
     background: #f8f9fa;
@@ -139,6 +159,12 @@ header {
 }
 
 .month-item:hover {
+    background: #667eea;
+    color: white;
+    transform: translateY(-5px);
+}
+
+.Year-item:hover {
     background: #667eea;
     color: white;
     transform: translateY(-5px);
@@ -163,11 +189,11 @@ header {
 
 .modal-content {
     background: white;
-    padding: 50px;
+    padding: 30px;
     border-radius: 15px;
     max-width: 50%;
     width: 90%;
-    max-height: 40%;
+    max-height: 70%;
     overflow-y: auto;
 }
 

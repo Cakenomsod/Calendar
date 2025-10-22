@@ -78,6 +78,8 @@ function setupDayClick() {
   });
 }
 
+
+
 // ------------------- เลื่อนเดือน -------------------
 function nextMonth() {
   const wrapper = document.getElementById('calendarContentWrapper');
@@ -121,11 +123,37 @@ function selectMonthFromModal(monthIndex) {
   renderAllMonths();
 }
 
+// ------------------- Modal ปี -------------------
+function showYearModal() {
+  const modal = document.getElementById('YearModal');
+  const grid = document.getElementById('YearGrid');
+  const currentYear = currentDate.getFullYear() + 543;
+  let html = '';
+  for (let year = currentYear - 6; year <= currentYear + 5; year++) {
+    html += `<div class="modal-item" onclick="selectYearFromModal(${year - 543})">${year}</div>`;
+  }
+  grid.innerHTML = html;
+  modal.classList.add('active');
+}
+function selectYearFromModal(year) {
+  currentDate.setFullYear(year);
+  document.getElementById('YearModal').classList.remove('active');
+  renderAllMonths();
+}
+
+
 // ------------------- Event listeners -------------------
 function setupEventListeners() {
   document.getElementById('currentMonth').addEventListener('click', showMonthModal);
-  document.getElementById('closeMonth').addEventListener('click', () => {
-    document.getElementById('monthModal').classList.remove('active');
+  document.getElementById('closeMonth').addEventListener('click', () => 
+  {
+  document.getElementById('monthModal').classList.remove('active');
+  });
+
+  document.getElementById('currentYear').addEventListener('click', showYearModal);
+  document.getElementById('closeYear').addEventListener('click', () => 
+  {
+  document.getElementById('YearModal').classList.remove('active');
   });
 
   // คลิก background modal ปิด
@@ -159,5 +187,5 @@ function setupEventListeners() {
   });
 }
 
-// ------------------- เริ่มต้น -------------------
+
 init();
