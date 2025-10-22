@@ -1,12 +1,15 @@
-import { auth } from "./script/firebase.js";
+// home.js
+import { auth, db } from "./firebase.js";
 import { onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { addDoc, collection, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-// ตรวจสอบว่าเคยมี token ใน localStorage จาก login site มั้ย
+// ------------------- Check login cross-domain -------------------
 async function checkLogin() {
   return new Promise((resolve) => {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         console.log("✅ ล็อกอินแล้ว:", user.displayName);
+        initCalendar(); // เรียก render ปฏิทินหลัง login
         resolve(user);
       } else {
         console.log("❌ ยังไม่ได้ล็อกอิน → ขอ token จาก login site");
@@ -17,28 +20,23 @@ async function checkLogin() {
   });
 }
 
-// ฟังก์ชันนี้จะพาผู้ใช้ไป login site พร้อม redirect กลับ
 async function handleCrossDomainLogin() {
   const redirectURL = encodeURIComponent(window.location.href);
   const loginURL = `https://calendar-login.web.app/?redirect=${redirectURL}`;
 
-  // พยายามเปิด popup ถ้าไม่ได้ ให้ redirect ไปเลย
   const loginPopup = window.open(loginURL, "loginPopup", "width=600,height=600");
 
-  // ถ้า popup ถูกบล็อก → redirect แบบเต็มหน้าแทน
   if (!loginPopup) {
     window.location.href = loginURL;
     return;
   }
 
-  // รอรับ token จาก login site
   window.addEventListener("message", async (event) => {
     if (event.origin !== "https://calendar-login.web.app") return;
     if (event.data?.type === "authSuccess") {
       const token = event.data.token;
       console.log("✅ ได้รับ token จาก login site");
 
-      // ใช้ token นี้ล็อกอินใน domain ปัจจุบัน
       try {
         await signInWithCustomToken(auth, token);
         console.log("✅ ลงชื่อเข้าใช้สำเร็จใน Home site");
@@ -49,22 +47,22 @@ async function handleCrossDomainLogin() {
     }
   });
 
-  // ส่งข้อความไปขอ token เผื่อ login site มี user อยู่แล้ว
   loginPopup.postMessage({ type: "requestAuthToken" }, "https://calendar-login.web.app");
 }
 
+// เริ่มเช็ก login
 checkLogin();
 
-
+// ------------------- Calendar -------------------
 const thaiMonths = [
   'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
   'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'
 ];
 
 let currentDate = new Date();
-let modalDate = null; // เก็บวันที่ใน modal
+let modalDate = null;
 
-function init() {
+function initCalendar() {
   renderAllMonths();
   setupEventListeners();
 }
@@ -87,7 +85,6 @@ function renderAllMonths() {
   setupDayClick();
 }
 
-// ------------------- สร้าง HTML เดือน -------------------
 function generateMonthHTML(dateObj, highlightToday = false) {
   const year = dateObj.getFullYear();
   const month = dateObj.getMonth();
@@ -98,12 +95,10 @@ function generateMonthHTML(dateObj, highlightToday = false) {
 
   let html = '<div class="calendar-grid">';
 
-  // วันก่อนหน้า
   for (let i = firstDay - 1; i >= 0; i--) {
     html += `<div class="border"><div class="calendar-day other-month">${daysInPrevMonth - i}</div></div>`;
   }
 
-  // วันปกติ
   for (let day = 1; day <= daysInMonth; day++) {
     const isToday = highlightToday &&
                     day === today.getDate() &&
@@ -111,12 +106,9 @@ function generateMonthHTML(dateObj, highlightToday = false) {
                     year === today.getFullYear();
     const dayOfWeek = new Date(year, month, day).getDay();
     const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-    html += `<div class="border"><div class="calendar-day ${isWeekend ? 'weekend' : ''} ${isToday ? 'selected' : ''}">
-               ${isToday ? `<span class="today-number">${day}</span>` : day}
-             </div></div>`;
+    html += `<div class="border"><div class="calendar-day ${isWeekend ? 'weekend' : ''} ${isToday ? 'selected' : ''}">${isToday ? `<span class="today-number">${day}</span>` : day}</div></div>`;
   }
 
-  // เติมช่องหลังเดือน
   const totalCells = firstDay + daysInMonth;
   const remaining = Math.ceil(totalCells / 7) * 7 - totalCells;
   for (let i = 1; i <= remaining; i++) {
@@ -143,27 +135,21 @@ function setupDayClick() {
   });
 }
 
-// ------------------- ฟังก์ชัน Modal แสดงกิจกรรม -------------------
+// ------------------- Modal กิจกรรม -------------------
 function showActivityModal(dateObj) {
   const modal = document.getElementById('activityModal');
   modalDate = new Date(dateObj);
   document.body.style.overflow = 'hidden';
-
   renderActivityInModal();
   modal.classList.add('active');
 
-  // Scroll mouse ใน modal
   modal.addEventListener('wheel', handleModalScroll);
-  // Swipe บนมือถือ
   setupModalSwipe(modal, 'activity');
-  // Keyboard arrow
   window.addEventListener('keydown', handleModalArrows);
 }
 
 function handleModalArrows(e) {
-  const modal = document.getElementById('activityModal');
-  if (!modal.classList.contains('active')) return;
-
+  if (!document.getElementById('activityModal').classList.contains('active')) return;
   if (e.key === 'ArrowRight') modalNextDay();
   else if (e.key === 'ArrowLeft') modalPrevDay();
 }
@@ -176,8 +162,6 @@ function modalPrevDay() {
   modalDate.setDate(modalDate.getDate() - 1);
   updateModalDate();
 }
-
-
 
 function updateModalDate() {
   renderActivityInModal();
@@ -199,7 +183,6 @@ function closeActivityModal() {
   document.body.style.overflow = '';
 }
 
-// ------------------- เพิ่มฟังก์ชัน Swipe ทั่วไป -------------------
 function setupModalSwipe(modal, type) {
   let startX = 0;
   let endX = 0;
@@ -208,25 +191,21 @@ function setupModalSwipe(modal, type) {
   modal.addEventListener('touchend', e => {
     endX = e.changedTouches[0].screenX;
     const swipe = endX - startX;
-
-    if (Math.abs(swipe) < 50) return; // ปัดเบาเกินไปไม่ทำงาน
+    if (Math.abs(swipe) < 50) return;
 
     if (type === 'activity') {
-      if (swipe < 0) modalNextDay(); // ปัดซ้าย = วันถัดไป
-      else modalPrevDay(); // ปัดขวา = วันก่อนหน้า
-    }
-    if (type === 'month') {
-      if (swipe < 0) nextYearInMonthModal(); // ปัดซ้าย = ไปปีหน้า
-      else prevYearInMonthModal(); // ปัดขวา = ปีก่อน
-    }
-    if (type === 'year') {
-      if (swipe < 0) nextDecadeInYearModal(); // ปัดซ้าย = +10ปี
-      else prevDecadeInYearModal(); // ปัดขวา = -10ปี
+      swipe < 0 ? modalNextDay() : modalPrevDay();
     }
   });
 }
 
-// แสดงกิจกรรมใน modal
+function handleModalScroll(e) {
+  e.preventDefault();
+  if (e.deltaY > 0) modalDate.setDate(modalDate.getDate() + 1);
+  else modalDate.setDate(modalDate.getDate() - 1);
+  updateModalDate();
+}
+
 function renderActivityInModal() {
   const modal = document.getElementById('activityModal');
   const title = document.getElementById('activityTitle');
@@ -239,16 +218,15 @@ function renderActivityInModal() {
   title.textContent = `กิจกรรมวันที่ ${day} ${thaiMonths[month]} ${year + 543}`;
   list.innerHTML = '';
 
-  // ตัวอย่างข้อมูลกิจกรรม
+  // ตัวอย่างกิจกรรม
   const exampleEvents = {
     '2025-10-22': ['สอบคณิต', 'นัดพรีเซนต์โปรเจค'],
     '2025-10-25': ['ประชุมสภานักเรียน', 'ส่งงานคอมพ์'],
   };
-
-  const key = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+  const key = `${year}-${(month+1).toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}`;
   const events = exampleEvents[key];
 
-  if (events && events.length > 0) {
+  if (events?.length) {
     events.forEach(e => {
       const div = document.createElement('div');
       div.className = 'activity-item';
@@ -259,105 +237,82 @@ function renderActivityInModal() {
     list.innerHTML = '<p style="color:#999;">ไม่มีรายการกิจกรรมในวันนี้</p>';
   }
 
-  // ------------------- เพิ่มกิจกรรม -------------------
-  document.getElementById('addActivityBtn').addEventListener('click', addActivity);
-  document.getElementById('activityInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') addActivity();
-  });
-
-  function addActivity() {
+  // เพิ่มกิจกรรม
   const input = document.getElementById('activityInput');
-  const text = input.value.trim();
-  if (text === '') return; // ❌ ไม่มีค่าไม่ทำอะไร
+  const addBtn = document.getElementById('addActivityBtn');
+
+  addBtn.onclick = addActivity;
+  input.onkeypress = e => { if(e.key==='Enter') addActivity(); };
+
+  async function addActivity() {
+    const text = input.value.trim();
+    if (!text) return;
 
     const div = document.createElement('div');
     div.className = 'activity-item';
     div.textContent = `• ${text}`;
-    document.getElementById('activityList').appendChild(div);
+    list.appendChild(div);
 
-    // 📅 เตรียมข้อมูลกิจกรรมพื้นฐาน
-    const year = modalDate.getFullYear();
-    const month = (modalDate.getMonth() + 1).toString().padStart(2, '0');
-    const day = modalDate.getDate().toString().padStart(2, '0');
-    const dateKey = `${year}-${month}-${day}`;
-
+    const dateKey = `${year}-${(month+1).toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}`;
     const activityData = {
       title: text,
       startDate: dateKey,
       endDate: dateKey,
       isAllDay: true,
-      startTime: null,
-      endTime: null,
-      notify: false,
       createdAt: serverTimestamp()
     };
 
-    // ✅ อัปโหลดไป Firestore
-    addDoc(collection(db, "activities"), activityData)
-      .then(() => {
-        console.log("เพิ่มกิจกรรมสำเร็จ:", text);
-      })
-      .catch((err) => {
-        console.error("เกิดข้อผิดพลาดในการเพิ่มกิจกรรม:", err);
-      });
+    try {
+      await addDoc(collection(db, "activities"), activityData);
+      console.log("เพิ่มกิจกรรมสำเร็จ:", text);
+    } catch(err) {
+      console.error("เกิดข้อผิดพลาด:", err);
+    }
 
-    // ล้างช่อง input
     input.value = '';
   }
 }
 
-// ------------------- เลื่อนใน modal -------------------
-function handleModalScroll(e) {
-  e.preventDefault(); // ❗ ป้องกันไม่ให้ body เลื่อน
+// ------------------- เลื่อนเดือน -------------------
+function nextMonth() { currentDate.setMonth(currentDate.getMonth()+1); renderAllMonths(); }
+function prevMonth() { currentDate.setMonth(currentDate.getMonth()-1); renderAllMonths(); }
 
-  if (e.deltaY > 0) {
-    // scroll ลง → วันถัดไป
-    modalDate.setDate(modalDate.getDate() + 1);
-  } else if (e.deltaY < 0) {
-    // scroll ขึ้น → วันก่อนหน้า
-    modalDate.setDate(modalDate.getDate() - 1);
-  }
+// ------------------- Event listeners -------------------
+function setupEventListeners() {
+  document.getElementById('currentMonth').addEventListener('click', () => { showMonthModal(); });
+  document.getElementById('closeMonth').addEventListener('click', () => document.getElementById('monthModal').classList.remove('active'));
+  document.getElementById('currentYear').addEventListener('click', () => { showYearModal(); });
+  document.getElementById('closeYear').addEventListener('click', () => document.getElementById('YearModal').classList.remove('active'));
+  document.getElementById('closeActivity').addEventListener('click', closeActivityModal);
 
-  // อัปเดตกิจกรรมใหม่
-  renderActivityInModal();
+  // background คลิกปิด modal
+  window.onclick = e => { if(e.target.classList.contains('modal')) closeActivityModal(); };
 
-  // sync กับปฏิทินหลัก
-  currentDate = new Date(modalDate);
-  renderAllMonths();
+  // body scroll เลื่อนเดือน
+  window.addEventListener('wheel', e => {
+    if(document.querySelector('.modal.active')) return;
+    e.deltaY>0?nextMonth():prevMonth();
+  });
 
-  // highlight วันที่ในปฏิทินหลัก
-  const day = modalDate.getDate();
-  document.querySelectorAll('.calendar-day').forEach(el => {
-    if (parseInt(el.textContent) === day && !el.classList.contains('other-month')) {
-      el.classList.add('selected');
-    }
+  // arrow key เลื่อนเดือน
+  window.addEventListener('keydown', e => {
+    if(document.querySelector('.modal.active')) return;
+    if(e.key==='ArrowRight') nextMonth();
+    else if(e.key==='ArrowLeft') prevMonth();
+  });
+  
+  // touch swipe
+  const container = document.getElementById('calendarContent');
+  let touchStartX=0, touchEndX=0;
+  container.addEventListener('touchstart', e=>touchStartX=e.changedTouches[0].screenX);
+  container.addEventListener('touchend', e=>{
+    if(document.querySelector('.modal.active')) return;
+    touchEndX=e.changedTouches[0].screenX;
+    const swipe=touchEndX-touchStartX;
+    swipe>80?prevMonth():swipe<-80?nextMonth():null;
   });
 }
 
-// ------------------- เลื่อนเดือน -------------------
-function nextMonth() {
-  const wrapper = document.getElementById('calendarContentWrapper');
-  wrapper.style.transform = 'translateX(-200%)';
-  wrapper.addEventListener('transitionend', () => {
-    currentDate.setMonth(currentDate.getMonth() + 1);
-    renderAllMonths();
-    wrapper.style.transition = 'none';
-    wrapper.style.transform = 'translateX(-100%)';
-    setTimeout(() => wrapper.style.transition = 'transform 0.3s ease', 10);
-  }, { once: true });
-}
-
-function prevMonth() {
-  const wrapper = document.getElementById('calendarContentWrapper');
-  wrapper.style.transform = 'translateX(0)';
-  wrapper.addEventListener('transitionend', () => {
-    currentDate.setMonth(currentDate.getMonth() - 1);
-    renderAllMonths();
-    wrapper.style.transition = 'none';
-    wrapper.style.transform = 'translateX(-100%)';
-    setTimeout(() => wrapper.style.transition = 'transform 0.3s ease', 10);
-  }, { once: true });
-}
 
 // ------------------- Modal เดือน -------------------
 function showMonthModal() {
