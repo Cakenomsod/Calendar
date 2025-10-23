@@ -7,20 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       console.log("✅ ผู้ใช้ล็อกอินอยู่:", user.email);
-
-      // โหลดข้อมูลผู้ใช้จาก Firestore
-      const userRef = doc(db, "Users", user.uid);
-      const userSnap = await getDoc(userRef);
-
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        console.log("📄 ข้อมูลผู้ใช้จาก Firestore:", userData);
-
-        // ✅ แสดงผลในหน้า calendar (เช่นชื่อหรืออีเมล)
-        document.getElementById("userEmail").textContent = user.email;
-      } else {
-        console.warn("⚠️ ไม่พบข้อมูลผู้ใช้ใน Firestore (อาจยังไม่เคยบันทึก)");
-      }
+      document.getElementById("userEmail").textContent = user.email;
 
     } else {
       console.log("❌ ยังไม่ได้เข้าสู่ระบบ → กลับไปหน้า login");
