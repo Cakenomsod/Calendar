@@ -1,15 +1,20 @@
-import { auth, signOut} from "../src/firebase.js";
-import {  onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
-
+import { auth, signOut } from "../src/firebase.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
   onAuthStateChanged(auth, async (user) => {
+    const userEmailElement = document.getElementById("userEmail");
+    const userInfoDiv = document.querySelector(".user-info");
+
     if (user) {
       console.log("✅ ผู้ใช้ล็อกอินอยู่:", user.email);
-      document.getElementById("userEmail").textContent = user.email;
 
-      if (user.photoURL) {
+      // แสดงอีเมล
+      userEmailElement.textContent = `Email: ${user.email}`;
+
+      // แสดงรูปโปรไฟล์ (ถ้ามี)
+      if (user.photoURL && userInfoDiv) {
         userInfoDiv.style.setProperty("--user-photo", `url('${user.photoURL}')`);
         userInfoDiv.classList.add("has-photo");
       }
@@ -21,8 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-
-// ปุ่มออกจากระบบ (กรณีมีในหน้า calendar)
+// ปุ่มออกจากระบบ
 const logoutBtn = document.getElementById("logoutBtn");
 if (logoutBtn) {
   logoutBtn.addEventListener("click", async () => {
@@ -36,6 +40,7 @@ if (logoutBtn) {
     }
   });
 }
+
 
 const thaiMonths = [
   'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
