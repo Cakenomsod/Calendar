@@ -20,7 +20,7 @@ document.getElementById("googleLoginBtn").addEventListener("click", async () => 
     localStorage.setItem("loggedInUser", user.email);
 
     alert("✅ เข้าสู่ระบบสำเร็จ!");
-    window.location.href = "../home.html";
+    window.location.href = "https://calendarproject-f570e.web.app/";
 
   } catch (error) {
     console.error("Login failed:", error);
