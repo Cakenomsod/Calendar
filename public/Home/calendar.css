@@ -20,12 +20,147 @@ header {
     margin-bottom: 5px;
 }
 
-.setting, .Magnifyinglass {
+.setting-icon, .Magnifyinglass-icon {
     font-size: 26px;
     color: #555;
     cursor: pointer;
     transition: color 0.3s;
 }
+
+/* ================== SETTINGS PANEL ================== */
+.setting {
+  position: fixed;
+  top: 0;
+  left: -30%; /* เริ่มต้นซ่อนอยู่ */
+  width: 30%;
+  min-width: 350px;
+  height: 100vh;
+  background: white;
+  box-shadow: 0px -4px 10px rgba(0,0,0,0.15);
+  transition: right 0.4s ease;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  padding: 25px;
+  border-radius: 0px 20px 20px 0px;
+}
+
+.setting.active {
+  left: 0;
+  transition: all 0.4s ease;
+}
+
+/* ตอนกำลังปิด */
+.setting.closing {
+  transform: translateX(-100%);
+}
+
+.setting-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+/* Header ในหน้า setting */
+.setting-content h2 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #333;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.setting-content h2::before {
+  content: "⚙️";
+  font-size: 24px;
+}
+
+/* กล่องข้อมูลผู้ใช้ */
+.user-info {
+  background: #f8f9fc;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.05);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.user-info::before {
+  content: "";
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  display: block;
+}
+
+/* email ข้อความ */
+#userEmail {
+  font-size: 15px;
+  color: #555;
+  word-break: break-word;
+}
+
+/* ปุ่มออกจากระบบ */
+#logoutBtn {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+}
+
+#logoutBtn:hover {
+  background: linear-gradient(135deg, #5a6fd1, #6b439b);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* ================== OVERLAY ================== */
+.overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(0px);
+  background: rgba(0,0,0,0);
+  opacity: 0;
+  transition: all 0.4s ease;
+  pointer-events: none;
+  z-index: 1500;
+}
+
+.overlay.active {
+  opacity: 1;
+  background: rgba(0,0,0,0.2);
+  backdrop-filter: blur(5px);
+  pointer-events: all;
+}
+
+/* ================== CALENDAR SLIDE ================== */
+.calendar-container {
+  transition: transform 1s ease;
+}
+
+.calendar-container.slide-right {
+  transform: translateX(150px);
+  filter: blur(2px);
+}
+
 
 #calendarContent {
   overflow: hidden;
@@ -35,29 +170,27 @@ header {
 #calendarContentWrapper {
   display: flex;
   width: 100%; 
-  transform: translateX(-100%); /* เริ่มที่เดือนกลาง */
+  transform: translateX(-100%);
   transition: transform 0.3s ease;
 }
 
 .calendar-month {
   width: 100%;
-    flex-shrink: 0;
+  flex-shrink: 0;
 }
-
-
-
 
 .calendar-container{
     background: white;
     padding: 20px;
     border-radius: 20px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    width: 95%; 
+    width: 98%; 
+    height: fit-content;
 }
 
 .current-Month{
-    flex: 0 0 100%; /* fix width เป็น 100% ของ container */
-    box-sizing: border-box; /* รวม padding กับ border ใน width */
+    flex: 0 0 100%;
+    box-sizing: border-box;
     font-size: 28px;
     font-weight: 600;
     color: #333;
@@ -114,7 +247,7 @@ header {
 .calendar-day {
     position: relative;
     padding-top: 2.5%;
-    height: 90px;
+    height: 100px;
     border-radius: 10px;
     transition: 0.2s;  
 }
@@ -148,7 +281,7 @@ header {
   padding: 8px 12px;
   box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.1);
   
-  /* ✅ ให้ช่องเพิ่มกิจกรรมติดด้านล่าง modal */
+
   position: sticky;
   bottom: 0;
   background: #fff;
@@ -160,7 +293,7 @@ header {
   position: relative;
   display: flex;
   flex-direction: column;
-  max-height: 90vh;
+  height: 70%;
   overflow-y: auto;
   padding-bottom: 10px;
 }
@@ -333,7 +466,72 @@ header {
   background: #e0e0e0;
 }
 
+.add-detail-modal {
+  max-width: 600px;
+  width: 90%;
+}
 
+.add-detail-modal h2 {
+  text-align: center;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.form-row input[type="text"],
+.form-row input[type="date"],
+.form-row input[type="time"],
+.form-row select,
+.form-row textarea {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+textarea#eventNotes {
+  width: 100%;
+  height: 80px;
+  resize: none;
+}
+
+.btn-group {
+  justify-content: center;
+  gap: 15px;
+}
+
+.save-btn {
+  background: #667eea;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.cancel-btn {
+  background: #ccc;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.save-btn:hover {
+  background: #5a6fd1;
+}
+
+.cancel-btn:hover {
+  background: #bbb;
+}
 
 @media (max-width: 768px) {
     .calendar-container {
@@ -344,6 +542,12 @@ header {
         flex-direction: column;
     }
     
+  .setting {
+    width: 70%;
+    min-width: unset;
+    left: -100%;
+  }
+
     .current-date {
         font-size: 16px;
     }
@@ -351,4 +555,12 @@ header {
     .calendar-day {
         font-size: 14px;
     }
+}
+
+@media (min-width: 769px) and (max-width: 1165px) {
+  .setting {
+    width: 50%;
+    min-width: unset;
+    left: -100%;
+  }
 }

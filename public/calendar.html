@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendar</title>
+
+  <link rel="stylesheet" href="Home/calendar.css">
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+</head>
+<body>
+  <div class="calendar-container">
+
+    <header>
+      <div class="setting-icon">
+        <i class="fas fa-cog"></i>
+      </div>
+      <div class="Magnifyinglass-icon">
+        <i class="fas fa-magnifying-glass"></i>
+      </div>
+    </header>
+
+  <div class="setting" id="settingPanel">
+    <div class="setting-content">
+      <h2>ตั้งค่า</h2>
+      <div class="user-info">
+        <p id="userEmail">Email: กำลังโหลด...</p>
+      </div>
+      <button id="logoutBtn">ออกจากระบบ</button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay"></div>
+  
+    <div class="navigation">
+        <div class="current-Month" id="currentMonth"></div>
+        <div class="current-Year" id="currentYear"></div>
+    </div>
+
+    <div class="day">
+        <div class="day-Names weekend">อา.</div>
+        <div class="day-Names">จ.</div>
+        <div class="day-Names">อ.</div>
+        <div class="day-Names">พ.</div>
+        <div class="day-Names">พฤ.</div>
+        <div class="day-Names">ศ.</div>
+        <div class="day-Names weekend">ส.</div>
+    </div>
+
+      <div id="calendarContent">
+        <div id="calendarContentWrapper">
+          <div class="calendar-month" id="prevMonth"></div>
+          <div class="calendar-month" id="currentMonthContent"></div>
+          <div class="calendar-month" id="nextMonth"></div>
+        </div>
+      </div>
+  </div>
+
+
+
+  <div class="modal" id="monthModal">
+    <div class="modal-content">
+        <span class="modal-close" id="closeMonth">&times;</span>
+        <h3 class="month-selector"></h3>
+        <div class="modal-grid" id="monthGrid"></div>
+    </div>
+  </div>
+
+  <div class="modal" id="YearModal">
+    <div class="modal-content">
+        <span class="modal-close" id="closeYear">&times;</span>
+        <h3 class="Year-selector"></h3>
+        <div class="modal-grid" id="YearGrid"></div>
+    </div>
+  </div>
+
+  <div class="addactivitymodal">
+    <!-- Modal เพิ่มกิจกรรมแบบละเอียด -->
+    <div class="modal" id="addDetailActivityModal">
+      <div class="modal-content add-detail-modal">
+        <span class="modal-close" id="closeAddDetailModal">&times;</span>
+        <h2>เพิ่มกิจกรรมใหม่</h2>
+
+        <!-- ชื่อกิจกรรม + emoji + สี -->
+        <div class="form-row">
+          <input type="text" id="eventTitle" placeholder="ชื่อกิจกรรม..." />
+          <button id="addEmojiBtn">😊</button>
+          <input type="color" id="highlightColor" title="เลือกสีไฮไลต์">
+        </div>
+
+        <!-- ทั้งวัน / กำหนดเวลา -->
+        <div class="form-row">
+          <label><input type="checkbox" id="allDayToggle"> ทั้งวัน</label>
+        </div>
+
+        <!-- วันที่เริ่ม-จบ -->
+        <div class="form-row">
+          <label>วันที่เริ่ม: <input type="date" id="startDate"></label>
+          <label>วันที่จบ: <input type="date" id="endDate"></label>
+        </div>
+
+        <!-- เวลาเริ่ม-จบ -->
+        <div class="form-row time-inputs">
+          <label>เวลาเริ่ม: <input type="time" id="startTime"></label>
+          <label>เวลาสิ้นสุด: <input type="time" id="endTime"></label>
+        </div>
+
+        <!-- สถานที่ -->
+        <div class="form-row">
+          <input type="text" id="locationText" placeholder="สถานที่..." />
+          <button id="openMapBtn">🗺️ แผนที่</button>
+        </div>
+
+        <!-- หมวดหมู่ -->
+        <div class="form-row">
+          <label for="categorySelect">หมวดหมู่:</label>
+          <select id="categorySelect">
+            <option value="">-- เลือกหมวดหมู่ --</option>
+            <option>การเรียน</option>
+            <option>งาน / โปรเจกต์</option>
+            <option>ส่วนตัว</option>
+            <option>อื่น ๆ</option>
+          </select>
+        </div>
+
+        <!-- การเตือน -->
+        <div class="form-row">
+          <label>เตือนก่อนเริ่ม: 
+            <input type="number" id="remindBeforeStart" min="0" value="1" style="width:60px;"> 
+            <select id="remindBeforeStartUnit">
+              <option value="hours">ชั่วโมง</option>
+              <option value="days">วัน</option>
+            </select>
+          </label>
+          <label>เตือนก่อนจบ: 
+            <input type="number" id="remindBeforeEnd" min="0" value="0" style="width:60px;"> 
+            <select id="remindBeforeEndUnit">
+              <option value="hours">ชั่วโมง</option>
+              <option value="days">วัน</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- การเตือนซ้ำ -->
+        <div class="form-row">
+          <label>เตือนซ้ำ: <input type="checkbox" id="repeatToggle"></label>
+          <div id="repeatOptions" style="display:none;">
+            <label>ทุก <input type="number" id="repeatInterval" min="1" value="1" style="width:60px;">
+            <select id="repeatUnit">
+              <option value="months">เดือน</option>
+              <option value="years">ปี</option>
+            </select></label>
+          </div>
+        </div>
+
+        <!-- หมายเหตุ -->
+        <div class="form-row">
+          <textarea id="eventNotes" placeholder="บันทึกเพิ่มเติมหรือลิ้งก์..."></textarea>
+        </div>
+
+        <!-- ไฟล์แนบ -->
+        <div class="form-row">
+          <label>แนบไฟล์: <input type="file" id="attachFile" multiple></label>
+        </div>
+
+        <!-- ปุ่ม -->
+        <div class="form-row btn-group">
+          <button id="saveEventBtn" class="save-btn">บันทึก</button>
+          <button id="cancelEventBtn" class="cancel-btn">ยกเลิก</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="activityModal">
+    <div class="modal-content">
+      <span class="modal-close" id="closeActivity">&times;</span>
+      <h3 id="activityTitle">กิจกรรม</h3>
+      <div id="activityList"></div>
+
+      <div class="addactivity">
+        <input type="text" id="activityInput" placeholder="เพิ่มกิจกรรม...">
+        <button id="addActivityBtn">+</button>
+      </div>
+
+    </div>
+  </div>
+
+
+
+
+  <script type="module" src="src/firebase.js"></script>
+  <script type="module" src="Home/calendar.js"></script>
+
+  
+</body>
+</html>
