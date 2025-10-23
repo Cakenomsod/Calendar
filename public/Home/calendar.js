@@ -1,4 +1,4 @@
-import { auth, db } from "../login/firebase-login.js";
+import { auth, db } from "../src/firebase.js";
 import {
   onAuthStateChanged,
   signOut
@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     } else {
       console.log("❌ ยังไม่ได้เข้าสู่ระบบ → กลับไปหน้า login");
-      window.location.href = "../login/login.html"; // เปลี่ยน path ตามจริง
+      window.location.href = "../Login/index.html"; // เปลี่ยน path ตามจริง
     }
   });
 });
@@ -44,7 +44,7 @@ if (logoutBtn) {
       await signOut(auth);
       localStorage.removeItem("loggedInUser");
       alert("ออกจากระบบเรียบร้อย");
-      window.location.href = "../login/login.html";
+      window.location.href = "../Login/index.html";
     } catch (error) {
       console.error("ออกจากระบบไม่สำเร็จ:", error);
     }
