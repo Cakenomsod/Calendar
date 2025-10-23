@@ -1,6 +1,6 @@
-import { auth, db, signOut} from "../src/firebase.js";
+import { auth, signOut} from "../src/firebase.js";
 import {  onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
-import {  doc,  getDoc} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+
 
 document.addEventListener("DOMContentLoaded", () => {
   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
@@ -8,6 +8,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (user) {
       console.log("✅ ผู้ใช้ล็อกอินอยู่:", user.email);
       document.getElementById("userEmail").textContent = user.email;
+
+      if (user.photoURL) {
+        userInfoDiv.style.setProperty("--user-photo", `url('${user.photoURL}')`);
+        userInfoDiv.classList.add("has-photo");
+      }
 
     } else {
       console.log("❌ ยังไม่ได้เข้าสู่ระบบ → กลับไปหน้า login");

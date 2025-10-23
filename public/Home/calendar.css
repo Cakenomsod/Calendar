@@ -102,6 +102,11 @@ header {
   display: block;
 }
 
+.user-info.has-photo::before {
+  background: var(--user-photo) center/cover no-repeat;
+}
+
+
 /* email ข้อความ */
 #userEmail {
   font-size: 15px;
