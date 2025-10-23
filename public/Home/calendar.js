@@ -1,12 +1,6 @@
-import { auth, db } from "../src/firebase.js";
-import {
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
-import {
-  doc,
-  getDoc
-} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+import { auth, db, signOut} from "../src/firebase.js";
+import {  onAuthStateChanged} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+import {  doc,  getDoc} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
@@ -23,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log("📄 ข้อมูลผู้ใช้จาก Firestore:", userData);
 
         // ✅ แสดงผลในหน้า calendar (เช่นชื่อหรืออีเมล)
-        document.getElementById("userEmail").textContent = userData.Email || user.email;
+        document.getElementById("userEmail").textContent = user.email;
       } else {
         console.warn("⚠️ ไม่พบข้อมูลผู้ใช้ใน Firestore (อาจยังไม่เคยบันทึก)");
       }
