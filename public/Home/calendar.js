@@ -1,4 +1,55 @@
+import { auth, db } from "../login/firebase-login.js";
+import {
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+import {
+  doc,
+  getDoc
+} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
+document.addEventListener("DOMContentLoaded", () => {
+  // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      console.log("✅ ผู้ใช้ล็อกอินอยู่:", user.email);
+
+      // โหลดข้อมูลผู้ใช้จาก Firestore
+      const userRef = doc(db, "Users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        const userData = userSnap.data();
+        console.log("📄 ข้อมูลผู้ใช้จาก Firestore:", userData);
+
+        // ✅ แสดงผลในหน้า calendar (เช่นชื่อหรืออีเมล)
+        document.getElementById("userEmail").textContent = userData.Email || user.email;
+      } else {
+        console.warn("⚠️ ไม่พบข้อมูลผู้ใช้ใน Firestore (อาจยังไม่เคยบันทึก)");
+      }
+
+    } else {
+      console.log("❌ ยังไม่ได้เข้าสู่ระบบ → กลับไปหน้า login");
+      window.location.href = "../login/login.html"; // เปลี่ยน path ตามจริง
+    }
+  });
+});
+
+
+// ปุ่มออกจากระบบ (กรณีมีในหน้า calendar)
+const logoutBtn = document.getElementById("logoutBtn");
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", async () => {
+    try {
+      await signOut(auth);
+      localStorage.removeItem("loggedInUser");
+      alert("ออกจากระบบเรียบร้อย");
+      window.location.href = "../login/login.html";
+    } catch (error) {
+      console.error("ออกจากระบบไม่สำเร็จ:", error);
+    }
+  });
+}
 
 const thaiMonths = [
   'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
