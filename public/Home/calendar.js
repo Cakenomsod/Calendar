@@ -669,6 +669,84 @@ repeatForever.addEventListener('change', () => {
 });
 
 
+// ========= ระบบหมวดหมู่ =========
+
+// โหลดหมวดหมู่ทั้งหมดของผู้ใช้
+async function loadCategories() {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  try {
+    const userDocRef = doc(db, "Users", user.uid);
+    const userDocSnap = await getDoc(userDocRef);
+
+    const select = document.getElementById("categorySelect");
+    select.innerHTML = '<option value="">-- เลือกหมวดหมู่ --</option>';
+
+    if (userDocSnap.exists()) {
+      const categories = userDocSnap.data().categories || [];
+      categories.forEach(cat => {
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+    }
+  } catch (err) {
+    console.error("❌ โหลดหมวดหมู่ล้มเหลว:", err);
+  }
+}
+
+// เพิ่มหมวดหมู่ใหม่
+async function addNewCategory(name) {
+  if (!name.trim()) return alert("กรุณาใส่ชื่อหมวดหมู่");
+
+  const user = auth.currentUser;
+  if (!user) return alert("ยังไม่ได้เข้าสู่ระบบ");
+
+  try {
+    const userDocRef = doc(db, "Users", user.uid);
+    const userSnap = await getDoc(userDocRef);
+    let categories = [];
+
+    if (userSnap.exists()) {
+      categories = userSnap.data().categories || [];
+    }
+
+    if (categories.includes(name)) {
+      alert("มีหมวดหมู่นี้อยู่แล้ว");
+      return;
+    }
+
+    categories.push(name);
+
+    await setDoc(userDocRef, { categories }, { merge: true });
+
+    alert("เพิ่มหมวดหมู่สำเร็จ!");
+    document.getElementById("addCategoryModal").classList.remove("active");
+    await loadCategories();
+  } catch (err) {
+    console.error("❌ เพิ่มหมวดหมู่ล้มเหลว:", err);
+  }
+}
+
+// ====== จัดการปุ่มและ Modal ======
+document.getElementById("addCategoryBtn").addEventListener("click", () => {
+  document.getElementById("addCategoryModal").classList.add("active");
+});
+
+document.getElementById("closeAddCategoryModal").addEventListener("click", () => {
+  document.getElementById("addCategoryModal").classList.remove("active");
+});
+
+document.getElementById("saveCategoryBtn").addEventListener("click", () => {
+  const newCat = document.getElementById("newCategoryName").value.trim();
+  addNewCategory(newCat);
+  document.getElementById("newCategoryName").value = "";
+});
+
+// โหลดหมวดหมู่ทุกครั้งเมื่อเปิด modal เพิ่มกิจกรรม
+document.getElementById("addDetailActivityModal").addEventListener("click", loadCategories);
 
 
 
@@ -680,6 +758,12 @@ document.getElementById("saveEventBtn").addEventListener("click", async () => {
   const endDate = document.getElementById("endDate").value;
   const startTime = document.getElementById("startTime").value;
   const endTime = document.getElementById("endTime").value;
+
+  const categoryName = document.getElementById("categorySelect").value;
+  if (!categoryName) {
+    alert("กรุณาเลือกหมวดหมู่ก่อนบันทึกกิจกรรม");
+    return;
+  }
 
   const activityData = {
     name,
@@ -699,15 +783,14 @@ document.getElementById("saveEventBtn").addEventListener("click", async () => {
     loop: {},
   };
 
-  await saveActivityToFirestore(activityData);
+  await saveActivityToFirestore(activityData, categoryName);
 });
 
 
 
 
 
-// ✅ เพิ่มกิจกรรมลง Firestore
-async function saveActivityToFirestore(activityData) {
+async function saveActivityToFirestore(activityData, categoryName) {
   const user = auth.currentUser;
   if (!user) {
     alert("กรุณาเข้าสู่ระบบก่อนเพิ่มกิจกรรม");
@@ -715,15 +798,10 @@ async function saveActivityToFirestore(activityData) {
   }
 
   try {
-    // ✅ โครงสร้าง: Users/{uid}/Category/Activities/{autoID}
-    const activitiesRef = collection(
-      db,
-      "Users",
-      user.uid,
-      "Category"
-    );
+    // ✅ path: Users/{uid}/{Categoryname}/{autoID}
+    const activitiesRef = collection(db, "Users", user.uid, categoryName);
 
-    const newActivityRef = doc(activitiesRef); // สร้าง doc ใหม่ใน collection "Activities"
+    const newActivityRef = doc(activitiesRef); // autoID
 
     await setDoc(newActivityRef, {
       Name: activityData.name || "กิจกรรมใหม่",
@@ -753,22 +831,16 @@ async function saveActivityToFirestore(activityData) {
 
 
 // ✅ โหลดกิจกรรมจาก Firestore ตามวัน
-async function loadActivitiesByDate(targetDate) {
+async function loadActivitiesByDate(targetDate, categoryName) {
   const user = auth.currentUser;
   if (!user) return [];
 
   try {
-    // ✅ โครงสร้าง: Users/{uid}/Category/{email}/Activities
-    const activitiesRef = collection(
-      db,
-      "Users",
-      user.uid,
-      "Category"
-    );
-
+    // ✅ path: Users/{uid}/{Categoryname}
+    const activitiesRef = collection(db, "Users", user.uid, categoryName);
     const querySnapshot = await getDocs(activitiesRef);
-    const activities = [];
 
+    const activities = [];
     querySnapshot.forEach((docSnap) => {
       const data = docSnap.data();
       const dayStart = data?.Day?.DayStart?.Date;
@@ -784,7 +856,6 @@ async function loadActivitiesByDate(targetDate) {
     return [];
   }
 }
-
 
 
 

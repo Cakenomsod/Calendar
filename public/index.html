@@ -120,13 +120,22 @@
         <!-- หมวดหมู่ -->
         <div class="form-row">
           <label for="categorySelect">หมวดหมู่:</label>
-          <select id="categorySelect">
-            <option value="">ปฏิทินส่วนตัว</option>
-            <option>การเรียน</option>
-            <option>งาน / โปรเจกต์</option>
-            <option>ส่วนตัว</option>
-            <option>อื่น ๆ</option>
-          </select>
+          <div class="category-wrapper">
+            <select id="categorySelect">
+              <option value="">-- เลือกหมวดหมู่ --</option>
+            </select>
+            <button id="addCategoryBtn" class="add-category-btn">+</button>
+          </div>
+        </div>
+
+        <!-- Modal เพิ่มหมวดหมู่ใหม่ -->
+        <div id="addCategoryModal" class="modal">
+          <div class="modal-content">
+            <span id="closeAddCategoryModal" class="close">&times;</span>
+            <h3>เพิ่มหมวดหมู่ใหม่</h3>
+            <input type="text" id="newCategoryName" placeholder="ชื่อหมวดหมู่ใหม่">
+            <button id="saveCategoryBtn">บันทึกหมวดหมู่</button>
+          </div>
         </div>
 
         <!-- 🔔 การแจ้งเตือน -->
