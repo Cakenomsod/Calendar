@@ -1,5 +1,6 @@
-import { auth, signOut } from "../src/firebase.js";
+import { auth, signOut, db } from "../src/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+import { doc, setDoc, addDoc, getDocs, collection, query, where} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
@@ -419,36 +420,33 @@ function setupDayClick() {
 
 
 // แสดงกิจกรรมใน modal
-function renderActivityInModal() {
-  const title = document.getElementById('activityTitle');
-  const list = document.getElementById('activityList');
+async function renderActivityInModal() {
+  const title = document.getElementById("activityTitle");
+  const list = document.getElementById("activityList");
 
   const year = modalDate.getFullYear();
   const month = modalDate.getMonth();
   const day = modalDate.getDate();
+  const keyDate = `${year}-${(month + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
 
   title.textContent = `กิจกรรมวันที่ ${day} ${thaiMonths[month]} ${year + 543}`;
-  list.innerHTML = '';
+  list.innerHTML = "<p style='color:#999;'>กำลังโหลด...</p>";
 
-  // ตัวอย่างข้อมูลกิจกรรม
-  const exampleEvents = {
-    '2025-10-22': ['สอบคณิต', 'นัดพรีเซนต์โปรเจค'],
-    '2025-10-25': ['ประชุมสภานักเรียน'],
-  };
+  const events = await loadActivitiesByDate(keyDate);
 
-  const key = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-  const events = exampleEvents[key];
-
-  if (events && events.length > 0) {
-    events.forEach(e => {
-      const div = document.createElement('div');
-      div.className = 'activity-item';
-      div.textContent = `• ${e}`;
+  if (events.length > 0) {
+    list.innerHTML = "";
+    events.forEach((e) => {
+      const div = document.createElement("div");
+      div.className = "activity-item";
+      div.textContent = `• ${e.Name}`;
       list.appendChild(div);
     });
   } else {
-    list.innerHTML = '<p style="color:#999;">ไม่มีรายการกิจกรรมในวันนี้</p>';
+    list.innerHTML = "<p style='color:#999;'>ไม่มีรายการกิจกรรมในวันนี้</p>";
   }
+}
+
 
   // ------------------- เพิ่มกิจกรรม -------------------
   document.getElementById('addActivityBtn').addEventListener('click', addActivity);
@@ -468,7 +466,7 @@ function renderActivityInModal() {
 
   input.value = '';
   }
-}
+
 
 // ✅ ซ่อน/แสดงเวลาในฟอร์มเพิ่มกิจกรรมเมื่อเลือก "ทั้งวัน"
 const allDayToggle = document.getElementById("allDayToggle");
@@ -672,6 +670,115 @@ repeatForever.addEventListener('change', () => {
 
 
 
+
+
+document.getElementById("saveEventBtn").addEventListener("click", async () => {
+  const name = document.getElementById("eventName").value;
+  const note = document.getElementById("eventNote").value;
+  const allday = document.getElementById("allDayToggle").checked;
+  const startDate = document.getElementById("startDate").value;
+  const endDate = document.getElementById("endDate").value;
+  const startTime = document.getElementById("startTime").value;
+  const endTime = document.getElementById("endTime").value;
+
+  const activityData = {
+    name,
+    note,
+    allday,
+    day: {
+      DayStart: { Date: startDate },
+      DayEnd: { Date: endDate }
+    },
+    time: allday
+      ? {}
+      : {
+          TimeStart: { Hour: +startTime.split(":")[0], Minute: +startTime.split(":")[1] },
+          TimeEnd: { Hour: +endTime.split(":")[0], Minute: +endTime.split(":")[1] }
+        },
+    notification: false,
+    loop: {},
+  };
+
+  await saveActivityToFirestore(activityData);
+});
+
+
+
+
+
+
+// 📝 ฟังก์ชันเพิ่มกิจกรรมลง Firestore
+async function saveActivityToFirestore(activityData) {
+  const user = auth.currentUser;
+  if (!user) {
+    alert("กรุณาเข้าสู่ระบบก่อนเพิ่มกิจกรรม");
+    return;
+  }
+
+  try {
+    const userDoc = doc(db, "Users", user.uid);
+    const categoryRef = collection(userDoc, "Category", user.email, "Activities");
+
+    const newActivityRef = doc(categoryRef);
+
+    await setDoc(newActivityRef, {
+      Name: activityData.name || "กิจกรรมใหม่",
+      Note: activityData.note || "",
+      Location: activityData.location || "",
+      File: activityData.file || "",
+      Allday: activityData.allday || false,
+
+      Notification: activityData.notification || false,
+      NotificationDetail: activityData.notificationDetail || {},
+
+      Day: activityData.day || {},
+      Time: activityData.time || {},
+      LoopNotification: activityData.loop || {},
+      CreatedAt: new Date(),
+    });
+
+    console.log("✅ เพิ่มกิจกรรมเรียบร้อย:", newActivityRef.id);
+    alert("เพิ่มกิจกรรมสำเร็จ!");
+  } catch (error) {
+    console.error("❌ บันทึกกิจกรรมล้มเหลว:", error);
+  }
+}
+
+
+
+
+
+
+
+
+// 📖 อ่านกิจกรรมจาก Firestore ตามวัน
+async function loadActivitiesByDate(targetDate) {
+  const user = auth.currentUser;
+  if (!user) return [];
+
+  try {
+    const userDoc = doc(db, "Users", user.uid);
+    const categoryRef = collection(userDoc, "Category", user.email, "Activities");
+
+    const querySnapshot = await getDocs(categoryRef);
+    const activities = [];
+
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+
+      // แปลงวันที่ให้เทียบง่าย
+      const dayStart = data?.Day?.DayStart?.Date;
+      if (dayStart === targetDate) {
+        activities.push({ id: docSnap.id, ...data });
+      }
+    });
+
+    return activities;
+  } catch (error) {
+    console.error("❌ โหลดกิจกรรมไม่สำเร็จ:", error);
+    return [];
+  }
+}
 
 
 
