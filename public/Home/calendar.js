@@ -706,8 +706,7 @@ document.getElementById("saveEventBtn").addEventListener("click", async () => {
 
 
 
-
-// 📝 ฟังก์ชันเพิ่มกิจกรรมลง Firestore
+// ✅ เพิ่มกิจกรรมลง Firestore
 async function saveActivityToFirestore(activityData) {
   const user = auth.currentUser;
   if (!user) {
@@ -716,10 +715,11 @@ async function saveActivityToFirestore(activityData) {
   }
 
   try {
-    const userDoc = doc(db, "Users", user.uid);
-    const categoryRef = collection(userDoc, "Category", user.email, "Activities");
+    // 👉 โครงสร้าง: Users/{uid}/Category/{email}/Activities/{autoID}
+    const categoryDocRef = doc(db, "Users", user.uid, "Category", user.email);
+    const activitiesRef = collection(categoryDocRef, "Activities");
 
-    const newActivityRef = doc(categoryRef);
+    const newActivityRef = doc(activitiesRef);
 
     await setDoc(newActivityRef, {
       Name: activityData.name || "กิจกรรมใหม่",
@@ -748,26 +748,23 @@ async function saveActivityToFirestore(activityData) {
 
 
 
-
-
-
-// 📖 อ่านกิจกรรมจาก Firestore ตามวัน
+// ✅ โหลดกิจกรรมจาก Firestore ตามวัน
 async function loadActivitiesByDate(targetDate) {
   const user = auth.currentUser;
   if (!user) return [];
 
   try {
-    const userDoc = doc(db, "Users", user.uid);
-    const categoryRef = collection(userDoc, "Category", user.email, "Activities");
+    // 👉 โครงสร้าง: Users/{uid}/Category/{email}/Activities
+    const categoryDocRef = doc(db, "Users", user.uid, "Category", user.email);
+    const activitiesRef = collection(categoryDocRef, "Activities");
 
-    const querySnapshot = await getDocs(categoryRef);
+    const querySnapshot = await getDocs(activitiesRef);
     const activities = [];
 
     querySnapshot.forEach((docSnap) => {
       const data = docSnap.data();
-
-      // แปลงวันที่ให้เทียบง่าย
       const dayStart = data?.Day?.DayStart?.Date;
+
       if (dayStart === targetDate) {
         activities.push({ id: docSnap.id, ...data });
       }
@@ -779,6 +776,7 @@ async function loadActivitiesByDate(targetDate) {
     return [];
   }
 }
+
 
 
 
