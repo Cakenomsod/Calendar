@@ -677,53 +677,44 @@ async function loadCategories() {
   if (!user) return;
 
   try {
-    const userDocRef = doc(db, "Users", user.uid);
-    const userDocSnap = await getDoc(userDocRef);
+    const userRef = doc(db, "Users", user.uid);
+
+    // 🔥 ใช้ listCollections() เพื่อดึงรายชื่อ subcollections (Category)
+    const collections = await listCollections(userRef);
 
     const select = document.getElementById("categorySelect");
     select.innerHTML = '<option value="">-- เลือกหมวดหมู่ --</option>';
 
-    if (userDocSnap.exists()) {
-      const categories = userDocSnap.data().categories || [];
-      categories.forEach(cat => {
-        const opt = document.createElement("option");
-        opt.value = cat;
-        opt.textContent = cat;
-        select.appendChild(opt);
-      });
-    }
+    collections.forEach(cat => {
+      const opt = document.createElement("option");
+      opt.value = cat.id; // ชื่อของ subcollection (CategoryName)
+      opt.textContent = cat.id;
+      select.appendChild(opt);
+    });
   } catch (err) {
     console.error("❌ โหลดหมวดหมู่ล้มเหลว:", err);
   }
 }
 
+
 // เพิ่มหมวดหมู่ใหม่
 async function addNewCategory(name) {
   if (!name.trim()) return alert("กรุณาใส่ชื่อหมวดหมู่");
-
   const user = auth.currentUser;
   if (!user) return alert("ยังไม่ได้เข้าสู่ระบบ");
 
   try {
-    const userDocRef = doc(db, "Users", user.uid);
-    const userSnap = await getDoc(userDocRef);
-    let categories = [];
+    // 🔥 หมวดหมู่คือ subcollection ใต้ Users/{uid}
+    const categoryRef = collection(db, "Users", user.uid, name);
 
-    if (userSnap.exists()) {
-      categories = userSnap.data().categories || [];
-    }
-
-    if (categories.includes(name)) {
-      alert("มีหมวดหมู่นี้อยู่แล้ว");
-      return;
-    }
-
-    categories.push(name);
-
-    await setDoc(userDocRef, { categories }, { merge: true });
+    // เพิ่ม dummy doc เพื่อให้ collection ถูกสร้างจริงใน Firestore
+    await setDoc(doc(categoryRef, "_init"), {
+      createdAt: new Date(),
+    });
 
     alert("เพิ่มหมวดหมู่สำเร็จ!");
     document.getElementById("addCategoryModal").classList.remove("active");
+
     await loadCategories();
   } catch (err) {
     console.error("❌ เพิ่มหมวดหมู่ล้มเหลว:", err);
@@ -793,38 +784,20 @@ document.getElementById("saveEventBtn").addEventListener("click", async () => {
 async function saveActivityToFirestore(activityData, categoryName) {
   const user = auth.currentUser;
   if (!user) {
-    alert("กรุณาเข้าสู่ระบบก่อนเพิ่มกิจกรรม");
+    alert("ยังไม่ได้เข้าสู่ระบบ");
     return;
   }
 
   try {
-    // ✅ path: Users/{uid}/{Categoryname}/{autoID}
-    const activitiesRef = collection(db, "Users", user.uid, categoryName);
-
-    const newActivityRef = doc(activitiesRef); // autoID
-
-    await setDoc(newActivityRef, {
-      Name: activityData.name || "กิจกรรมใหม่",
-      Note: activityData.note || "",
-      Location: activityData.location || "",
-      File: activityData.file || "",
-      Allday: activityData.allday || false,
-
-      Notification: activityData.notification || false,
-      NotificationDetail: activityData.notificationDetail || {},
-
-      Day: activityData.day || {},
-      Time: activityData.time || {},
-      LoopNotification: activityData.loop || {},
-      CreatedAt: new Date(),
-    });
-
-    console.log("✅ เพิ่มกิจกรรมเรียบร้อย:", newActivityRef.id);
-    alert("เพิ่มกิจกรรมสำเร็จ!");
-  } catch (error) {
-    console.error("❌ บันทึกกิจกรรมล้มเหลว:", error);
+    // 🔥 Path: Users/{uid}/{categoryName}/{autoID}
+    const activityRef = collection(db, "Users", user.uid, categoryName);
+    await addDoc(activityRef, activityData);
+    console.log("✅ บันทึกกิจกรรมสำเร็จ");
+  } catch (err) {
+    console.error("❌ บันทึกกิจกรรมล้มเหลว:", err);
   }
 }
+
 
 
 
