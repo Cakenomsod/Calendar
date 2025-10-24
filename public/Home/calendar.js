@@ -1,45 +1,45 @@
-import { auth, signOut } from "../src/firebase.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
+// import { auth, signOut } from "../src/firebase.js";
+// import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
 
-document.addEventListener("DOMContentLoaded", () => {
-  // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
-  onAuthStateChanged(auth, async (user) => {
-    const userEmailElement = document.getElementById("userEmail");
-    const userInfoDiv = document.querySelector(".user-info");
+// document.addEventListener("DOMContentLoaded", () => {
+//   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
+//   onAuthStateChanged(auth, async (user) => {
+//     const userEmailElement = document.getElementById("userEmail");
+//     const userInfoDiv = document.querySelector(".user-info");
 
-    if (user) {
-      console.log("✅ ผู้ใช้ล็อกอินอยู่:", user.email);
+//     if (user) {
+//       console.log("✅ ผู้ใช้ล็อกอินอยู่:", user.email);
 
-      // แสดงอีเมล
-      userEmailElement.textContent = `Email: ${user.email}`;
+//       // แสดงอีเมล
+//       userEmailElement.textContent = `Email: ${user.email}`;
 
-      // แสดงรูปโปรไฟล์ (ถ้ามี)
-      if (user.photoURL && userInfoDiv) {
-        userInfoDiv.style.setProperty("--user-photo", `url('${user.photoURL}')`);
-        userInfoDiv.classList.add("has-photo");
-      }
+//       // แสดงรูปโปรไฟล์ (ถ้ามี)
+//       if (user.photoURL && userInfoDiv) {
+//         userInfoDiv.style.setProperty("--user-photo", `url('${user.photoURL}')`);
+//         userInfoDiv.classList.add("has-photo");
+//       }
 
-    } else {
-      console.log("❌ ยังไม่ได้เข้าสู่ระบบ → กลับไปหน้า login");
-      window.location.href = "../Login/index.html"; // เปลี่ยน path ตามจริง
-    }
-  });
-});
+//     } else {
+//       console.log("❌ ยังไม่ได้เข้าสู่ระบบ → กลับไปหน้า login");
+//       window.location.href = "../Login/index.html"; // เปลี่ยน path ตามจริง
+//     }
+//   });
+// });
 
-// ปุ่มออกจากระบบ
-const logoutBtn = document.getElementById("logoutBtn");
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", async () => {
-    try {
-      await signOut(auth);
-      localStorage.removeItem("loggedInUser");
-      alert("ออกจากระบบเรียบร้อย");
-      window.location.href = "../Login/index.html";
-    } catch (error) {
-      console.error("ออกจากระบบไม่สำเร็จ:", error);
-    }
-  });
-}
+// // ปุ่มออกจากระบบ
+// const logoutBtn = document.getElementById("logoutBtn");
+// if (logoutBtn) {
+//   logoutBtn.addEventListener("click", async () => {
+//     try {
+//       await signOut(auth);
+//       localStorage.removeItem("loggedInUser");
+//       alert("ออกจากระบบเรียบร้อย");
+//       window.location.href = "../Login/index.html";
+//     } catch (error) {
+//       console.error("ออกจากระบบไม่สำเร็จ:", error);
+//     }
+//   });
+// }
 
 
 const thaiMonths = [
@@ -89,6 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const logoutBtn = document.getElementById("logoutBtn");
   if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("loggedInUser");
       alert("ออกจากระบบเรียบร้อย!");
       settingPanel.classList.remove("active");
       overlay.classList.remove("active");
@@ -223,7 +224,7 @@ function showYearModal() {
   const currentYear = currentDate.getFullYear() + 543;
   
   // แสดงช่วงปีรอบปัจจุบัน
-  yearModalBase = Math.floor(currentYear / 10) * 10; // เช่น 2570 → เริ่มที่ 2569
+  yearModalBase = currentYear - (currentYear % 10); // เช่น 2570 → เริ่มที่ 2569
   renderYearModalGrid();
   modal.classList.add('active');
 
@@ -232,6 +233,10 @@ function showYearModal() {
 
   // เพิ่มปุ่มลูกศรซ้ายขวา (กดได้ใน modal)
   document.addEventListener('keydown', handleYearModalArrowKeys);
+}
+
+function NotificationSettings() {
+  document.getElementById('NotificationModal').classList.add('active');
 }
 
 function handleYearModalArrowKeys(e) {
@@ -359,7 +364,7 @@ function setupModalSwipe(modal, type) {
     if (type === 'activity') {
       if (swipe < 0) modalNextDay(); // ปัดซ้าย = วันถัดไป
       else modalPrevDay(); // ปัดขวา = วันก่อนหน้า
-    }ก
+    }
   });
 }
 
@@ -394,25 +399,16 @@ function setupDayClick() {
       let month = currentDate.getMonth();
 
       // ✅ ตรวจว่าคือวันของเดือนก่อนหน้าหรือเดือนถัดไป
-      if (dayEl.classList.contains('other-month')) {
-        // นับจำนวนช่องวันก่อนหน้าในเดือนนี้
-        const firstDayOfMonth = new Date(year, month, 1).getDay();
-        const daysInPrevMonth = new Date(year, month, 0).getDate();
-
-        // ถ้าตัวเลขใน .other-month < 15 และอยู่ท้าย grid → เดือนถัดไป
-        // ถ้า > (daysInPrevMonth - firstDayOfMonth) → เดือนก่อนหน้า
-        if (day <= 15 && dayEl.parentElement && dayEl.parentElement.parentElement) {
-          // ตรวจจากตำแหน่ง index ใน grid เพื่อแยกฝั่ง
-          const index = Array.from(document.querySelectorAll('.calendar-day')).indexOf(dayEl);
-          const totalDays = document.querySelectorAll('.calendar-day').length;
-          if (index > totalDays - 7) month += 1; // แถวสุดท้าย → เดือนถัดไป
-          else month -= 1; // แถวแรก ๆ → เดือนก่อนหน้า
-        } else {
-          // fallback ปลอดภัย
-          if (day > 20) month -= 1;
-          else month += 1;
+        if (dayEl.classList.contains('other-month')) {
+          const index = Array.from(dayEl.parentElement.children).indexOf(dayEl);
+          if (index < 7) {
+            // อยู่แถวแรก → เดือนก่อนหน้า
+            month -= 1;
+          } else {
+            // แถวสุดท้าย → เดือนถัดไป
+            month += 1;
+          }
         }
-      }
 
       const selectedDate = new Date(year, month, day);
       showActivityModal(selectedDate);
@@ -437,7 +433,7 @@ function renderActivityInModal() {
   // ตัวอย่างข้อมูลกิจกรรม
   const exampleEvents = {
     '2025-10-22': ['สอบคณิต', 'นัดพรีเซนต์โปรเจค'],
-    '2025-10-25': ['ประชุมสภานักเรียน', 'ส่งงานคอมพ์'],
+    '2025-10-25': ['ประชุมสภานักเรียน'],
   };
 
   const key = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
@@ -488,6 +484,8 @@ function setupEventListeners() {
   });
 
   document.getElementById('closeActivity').addEventListener('click', closeActivityModal);
+
+  document.getElementById('Notification').addEventListener('click', NotificationSettings);
 
   // คลิก background ปิด modal
   window.onclick = (e) => {
@@ -544,21 +542,28 @@ function openAddDetailModal(dateObj = null) {
   addDetailModal.classList.add('active');
   document.body.style.overflow = 'hidden';
   if (dateObj) {
-    const isoDate = dateObj.toISOString().split('T')[0];
+    // ลบ 1 วันจากวันที่ที่คลิก
+    const adjustedDate = new Date(dateObj);
+    adjustedDate.setDate(adjustedDate.getDate() + 1);
+
+    const isoDate = adjustedDate.toISOString().split('T')[0];
     document.getElementById('startDate').value = isoDate;
     document.getElementById('endDate').value = isoDate;
+
+    document.getElementById('startTime').value = '09:00';
+    document.getElementById('endTime').value = '10:00';
   }
 }
+
+
+
 
 function closeAddDetailActivityModal() {
   addDetailModal.classList.remove('active');
   document.body.style.overflow = '';
 }
 
-// toggle ซ้ำ
-repeatToggle.addEventListener('change', () => {
-  repeatOptions.style.display = repeatToggle.checked ? 'block' : 'none';
-});
+
 
 // ปุ่มปิด
 closeAddDetailModal.addEventListener('click', closeAddDetailActivityModal);
@@ -568,14 +573,92 @@ cancelEventBtn.addEventListener('click', closeAddDetailActivityModal);
 document.getElementById('addActivityBtn').addEventListener('click', () => {
   const input = document.getElementById('activityInput');
   if (input.value.trim() === '') {
+    closeActivityModal();
     openAddDetailModal(modalDate);
   }
 });
 
-// เมื่อคลิกวันที่ที่ไม่มีกิจกรรม
-function handleEmptyDayClick(dateObj) {
-  openAddDetailModal(dateObj);
+const Notification = document.getElementById('Notification');
+const NotificationModal = document.getElementById('NotificationModal');
+const closeNotificationModal = document.getElementById('closeNotificationModal');
+
+Notification.addEventListener('click', () => {
+  NotificationModal.classList.add('active');
+});
+
+closeNotificationModal.addEventListener('click', () => {
+  NotificationModal.classList.remove('active');
+});
+
+// ฟังก์ชันสร้าง notification item
+function createNotificationItem(listContainer) {
+  const div = document.createElement('div');
+  div.className = 'notification-item';
+  div.innerHTML = `
+    <input type="number" min="0" value="1">
+    <select>
+      <option value="minutes">นาที</option>
+      <option value="hours">ชั่วโมง</option>
+      <option value="days">วัน</option>
+      <option value="weeks">อาทิตย์</option>
+      <option value="months">เดือน</option>
+    </select>
+    <button class="remove-btn">❌</button>
+  `;
+  div.querySelector('.remove-btn').addEventListener('click', () => div.remove());
+  listContainer.appendChild(div);
 }
+
+// ก่อนเริ่มกิจกรรม
+const beforeStartList = document.getElementById('beforeStartList');
+const addBeforeStart = document.getElementById('addBeforeStart');
+addBeforeStart.addEventListener('click', () => createNotificationItem(beforeStartList));
+
+// ก่อนจบกิจกรรม
+const beforeEndList = document.getElementById('beforeEndList');
+const addBeforeEnd = document.getElementById('addBeforeEnd');
+addBeforeEnd.addEventListener('click', () => createNotificationItem(beforeEndList));
+
+// เพิ่ม notification เริ่มต้น 1 อัน
+createNotificationItem(beforeStartList);
+createNotificationItem(beforeEndList);
+
+const cancelNotificationBtn = document.getElementById('cancelNotificationSettings');
+
+cancelNotificationBtn.addEventListener('click', () => {
+  NotificationModal.classList.remove('active');
+});
+
+// --- Modal การเตือนซ้ำ ---
+const repeatBtn = document.getElementById('RepeatLabel');
+const repeatModal = document.getElementById('RepeatModal');
+const closeRepeat = document.getElementById('closeRepeat');
+
+repeatBtn.addEventListener('click', () => {
+  repeatModal.classList.add('active');
+});
+closeRepeat.addEventListener('click', () => {
+  repeatModal.classList.remove('active');
+});
+
+
+// --- การเตือนซ้ำ: ปุ่ม "ตลอดไป" ---
+const repeatForever = document.getElementById('repeatForever');
+const repeatEndDate = document.getElementById('repeatEndDate');
+
+repeatForever.addEventListener('change', () => {
+  if (repeatForever.checked) {
+    repeatEndDate.disabled = true;
+    repeatEndDate.value = ""; // ล้างค่าถ้ามี
+  } else {
+    repeatEndDate.disabled = false;
+  }
+});
+
+
+
+
+
 
 
 // เริ่มทำงานหลัง DOM โหลดครบ
@@ -585,5 +668,14 @@ document.addEventListener("DOMContentLoaded", () => {
   // ทำให้เรียกใช้ได้จาก onclick ใน HTML
   window.selectMonthFromModal = selectMonthFromModal;
   window.selectYearFromModal = selectYearFromModal;
+
+  document.querySelectorAll('input[type="time"]').forEach(input => {
+    input.addEventListener('change', () => {
+      // แปลงค่าเวลาให้เป็น 24 ชั่วโมง
+      const [h, m] = input.value.split(':');
+      const formatted = `${h.padStart(2, '0')}:${m.padStart(2, '0')}`;
+      input.value = formatted;
+    });
+  });
 
 });

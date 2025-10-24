@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th" data-time-format="24h">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -87,13 +87,16 @@
         <!-- ชื่อกิจกรรม + emoji + สี -->
         <div class="form-row">
           <input type="text" id="eventTitle" placeholder="ชื่อกิจกรรม..." />
-          <button id="addEmojiBtn">😊</button>
           <input type="color" id="highlightColor" title="เลือกสีไฮไลต์">
         </div>
 
         <!-- ทั้งวัน / กำหนดเวลา -->
         <div class="form-row">
-          <label><input type="checkbox" id="allDayToggle"> ทั้งวัน</label>
+          <label class="switch">
+            ทั้งวัน
+            <input type="checkbox" id="allDayToggle">
+            <span class="slider round"></span>
+          </label>
         </div>
 
         <!-- วันที่เริ่ม-จบ -->
@@ -104,8 +107,8 @@
 
         <!-- เวลาเริ่ม-จบ -->
         <div class="form-row time-inputs">
-          <label>เวลาเริ่ม: <input type="time" id="startTime"></label>
-          <label>เวลาสิ้นสุด: <input type="time" id="endTime"></label>
+          <label>เวลาเริ่ม: <input type="time" id="startTime" step="60"></label>
+          <label>เวลาสิ้นสุด: <input type="time" id="endTime" step="60"></label>
         </div>
 
         <!-- สถานที่ -->
@@ -118,7 +121,7 @@
         <div class="form-row">
           <label for="categorySelect">หมวดหมู่:</label>
           <select id="categorySelect">
-            <option value="">-- เลือกหมวดหมู่ --</option>
+            <option value="">ปฏิทินส่วนตัว</option>
             <option>การเรียน</option>
             <option>งาน / โปรเจกต์</option>
             <option>ส่วนตัว</option>
@@ -126,35 +129,82 @@
           </select>
         </div>
 
-        <!-- การเตือน -->
+        <!-- 🔔 การแจ้งเตือน -->
         <div class="form-row">
-          <label>เตือนก่อนเริ่ม: 
-            <input type="number" id="remindBeforeStart" min="0" value="1" style="width:60px;"> 
-            <select id="remindBeforeStartUnit">
-              <option value="hours">ชั่วโมง</option>
-              <option value="days">วัน</option>
-            </select>
-          </label>
-          <label>เตือนก่อนจบ: 
-            <input type="number" id="remindBeforeEnd" min="0" value="0" style="width:60px;"> 
-            <select id="remindBeforeEndUnit">
-              <option value="hours">ชั่วโมง</option>
-              <option value="days">วัน</option>
-            </select>
+          <label id="Notification" class="notification-btn">
+            <i class="fas fa-bell"></i> แจ้งเตือน
           </label>
         </div>
 
-        <!-- การเตือนซ้ำ -->
-        <div class="form-row">
-          <label>เตือนซ้ำ: <input type="checkbox" id="repeatToggle"></label>
-          <div id="repeatOptions" style="display:none;">
-            <label>ทุก <input type="number" id="repeatInterval" min="1" value="1" style="width:60px;">
-            <select id="repeatUnit">
-              <option value="months">เดือน</option>
-              <option value="years">ปี</option>
-            </select></label>
+        <!-- 🔔 Modal ตั้งค่าแจ้งเตือน -->
+        <div id="NotificationModal" class="modal">
+          <div id="NotificationModalContent" class="modal-content notification-modal">
+            <span id="closeNotificationModal" class="modal-close">&times;</span>
+            <h3>ตั้งค่าการแจ้งเตือน</h3>
+
+            <!-- Section แจ้งเตือนก่อนเริ่มกิจกรรม -->
+            <div class="notification-section">
+              <h4>⏰ แจ้งเตือนก่อนเริ่มกิจกรรม</h4>
+              <div id="beforeStartList" class="notification-list">
+                <!-- Notification item จะถูกเพิ่มด้วย JS -->
+              </div>
+              <button id="addBeforeStart" class="add-btn">+ เพิ่มแจ้งเตือน</button>
+            </div>
+
+            <!-- Section แจ้งเตือนก่อนจบกิจกรรม -->
+            <div class="notification-section">
+              <h4>🕓 แจ้งเตือนก่อนจบกิจกรรม</h4>
+              <div id="beforeEndList" class="notification-list">
+                <!-- Notification item จะถูกเพิ่มด้วย JS -->
+              </div>
+              <button id="addBeforeEnd" class="add-btn">+ เพิ่มแจ้งเตือน</button>
+            </div>
+
+            <div class="modal-actions">
+              
+              <button id="cancelNotificationSettings">ยกเลิก</button>
+              <button id="saveNotificationSettings">บันทึก</button>
+            </div>
           </div>
         </div>
+
+
+
+        <!-- 🔁 ปุ่มเปิดการเตือนซ้ำ -->
+        <div class="form-row">
+          <label id="RepeatLabel">เตือนซ้ำ 🔁</label>
+        </div>
+
+        <!-- 🔁 Modal การเตือนซ้ำ -->
+        <div class="modal" id="RepeatModal">
+          <div class="modal-content small-modal">
+            <span class="modal-close" id="closeRepeat">&times;</span>
+            <h3>การเตือนซ้ำ</h3>
+
+            <div class="repeat-section">
+              <label>ทุก ๆ</label>
+              <input type="number" id="repeatInterval" min="1" value="1">
+              <select id="repeatUnit">
+                <option value="days">วัน</option>
+                <option value="weeks">สัปดาห์</option>
+                <option value="months">เดือน</option>
+                <option value="years">ปี</option>
+              </select>
+            </div>
+
+            <div class="repeat-end">
+              <label>สิ้นสุดการเตือนซ้ำ:</label>
+              <div class="repeat-end-options">
+                <input type="date" id="repeatEndDate">
+                <label class="forever-option">
+                  <input type="checkbox" id="repeatForever">
+                  <span>ตลอดไป ♾️</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
 
         <!-- หมายเหตุ -->
         <div class="form-row">
@@ -168,8 +218,8 @@
 
         <!-- ปุ่ม -->
         <div class="form-row btn-group">
-          <button id="saveEventBtn" class="save-btn">บันทึก</button>
           <button id="cancelEventBtn" class="cancel-btn">ยกเลิก</button>
+          <button id="saveEventBtn" class="save-btn">บันทึก</button>
         </div>
       </div>
     </div>
