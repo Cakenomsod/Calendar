@@ -669,6 +669,26 @@ repeatForever.addEventListener('change', () => {
 });
 
 
+// ====== จัดการปุ่มและ Modal ======
+document.getElementById("addCategoryBtn").addEventListener("click", () => {
+  document.getElementById("addCategoryModal").classList.add("active");
+});
+
+document.getElementById("closeAddCategoryModal").addEventListener("click", () => {
+  document.getElementById("addCategoryModal").classList.remove("active");
+});
+
+document.getElementById("saveCategoryBtn").addEventListener("click", () => {
+  const newCat = document.getElementById("newCategoryName").value.trim();
+  addNewCategory(newCat);
+  document.getElementById("newCategoryName").value = "";
+});
+
+// โหลดหมวดหมู่ทุกครั้งเมื่อเปิด modal เพิ่มกิจกรรม
+document.getElementById("addDetailActivityModal").addEventListener("click", loadCategories);
+
+
+
 // ========= ระบบหมวดหมู่ =========
 
 // โหลดหมวดหมู่ทั้งหมดของผู้ใช้
@@ -708,7 +728,7 @@ async function addNewCategory(name) {
     const categoryRef = collection(db, "Users", user.uid, name);
 
     // เพิ่ม dummy doc เพื่อให้ collection ถูกสร้างจริงใน Firestore
-    await setDoc(doc(categoryRef, "_init"), {
+    await setDoc(doc(categoryRef), {
       createdAt: new Date(),
     });
 
@@ -721,23 +741,6 @@ async function addNewCategory(name) {
   }
 }
 
-// ====== จัดการปุ่มและ Modal ======
-document.getElementById("addCategoryBtn").addEventListener("click", () => {
-  document.getElementById("addCategoryModal").classList.add("active");
-});
-
-document.getElementById("closeAddCategoryModal").addEventListener("click", () => {
-  document.getElementById("addCategoryModal").classList.remove("active");
-});
-
-document.getElementById("saveCategoryBtn").addEventListener("click", () => {
-  const newCat = document.getElementById("newCategoryName").value.trim();
-  addNewCategory(newCat);
-  document.getElementById("newCategoryName").value = "";
-});
-
-// โหลดหมวดหมู่ทุกครั้งเมื่อเปิด modal เพิ่มกิจกรรม
-document.getElementById("addDetailActivityModal").addEventListener("click", loadCategories);
 
 
 
