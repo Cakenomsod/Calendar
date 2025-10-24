@@ -715,13 +715,12 @@ async function saveActivityToFirestore(activityData) {
   }
 
   try {
-    // ✅ โครงสร้าง: Users/{uid}/Category/{email}/Activities/{autoID}
+    // ✅ โครงสร้าง: Users/{uid}/Category/Activities/{autoID}
     const activitiesRef = collection(
       db,
       "Users",
       user.uid,
       "Category",
-      user.email,
       "Activities"
     );
 
@@ -766,7 +765,6 @@ async function loadActivitiesByDate(targetDate) {
       "Users",
       user.uid,
       "Category",
-      user.email,
       "Activities"
     );
 
