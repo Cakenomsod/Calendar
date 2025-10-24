@@ -728,7 +728,7 @@ async function addNewCategory(name) {
     const categoryRef = collection(db, "Users", user.uid, name);
 
     // เพิ่ม dummy doc เพื่อให้ collection ถูกสร้างจริงใน Firestore
-    await setDoc(doc(categoryRef), {
+    await setDoc(doc(categoryRef, "Activity01"), {
       createdAt: new Date(),
     });
 
