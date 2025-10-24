@@ -470,6 +470,21 @@ function renderActivityInModal() {
   }
 }
 
+// ✅ ซ่อน/แสดงเวลาในฟอร์มเพิ่มกิจกรรมเมื่อเลือก "ทั้งวัน"
+const allDayToggle = document.getElementById("allDayToggle");
+const timeInputsRow = document.querySelector(".time-inputs");
+
+if (allDayToggle && timeInputsRow) {
+  allDayToggle.addEventListener("change", () => {
+    if (allDayToggle.checked) {
+      timeInputsRow.style.display = "none"; // ซ่อนช่องเวลา
+    } else {
+      timeInputsRow.style.display = "flex"; // แสดงกลับมา
+    }
+  });
+}
+
+
 
 // ------------------- Event listeners -------------------
 function setupEventListeners() {
