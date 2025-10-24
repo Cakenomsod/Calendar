@@ -1,6 +1,6 @@
 import { auth, signOut, db } from "../src/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
-import { doc, setDoc, addDoc, getDocs, collection, query, where} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+import { doc, setDoc, addDoc, getDocs, collection} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
@@ -783,6 +783,11 @@ document.getElementById("saveEventBtn").addEventListener("click", async () => {
 
 async function saveActivityToFirestore(activityData, categoryName) {
   const user = auth.currentUser;
+
+  console.log("ผู้ใช้ปัจจุบัน:", user);
+  console.log("ข้อมูลกิจกรรมที่จะบันทึก:", activityData);
+  console.log("หมวดหมู่กิจกรรม:", categoryName);
+
   if (!user) {
     alert("ยังไม่ได้เข้าสู่ระบบ");
     return;
@@ -805,6 +810,10 @@ async function saveActivityToFirestore(activityData, categoryName) {
 
 // ✅ โหลดกิจกรรมจาก Firestore ตามวัน
 async function loadActivitiesByDate(targetDate, categoryName) {
+
+  console.log("กำลังโหลดกิจกรรมสำหรับวันที่:", targetDate, "ในหมวดหมู่:", categoryName);
+  console.log("ผู้ใช้ปัจจุบัน:", auth.currentUser);
+  console.log("ฐานข้อมูล Firestore:", db);
   const user = auth.currentUser;
   if (!user) return [];
 
