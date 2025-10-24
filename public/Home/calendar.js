@@ -1,6 +1,6 @@
 import { auth, signOut, db } from "../src/firebase.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-auth.js";
-import { doc, setDoc, addDoc, getDocs, collection} from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.00.0/firebase-auth.js";
+import { doc, setDoc, addDoc, getDocs, collection, listCollections} from "https://www.gstatic.com/firebasejs/11.00.0/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
@@ -698,8 +698,6 @@ async function loadCategories() {
 
   try {
     const userRef = doc(db, "Users", user.uid);
-
-    // 🔥 ใช้ listCollections() เพื่อดึงรายชื่อ subcollections (Category)
     const collections = await listCollections(userRef);
 
     const select = document.getElementById("categorySelect");
@@ -707,7 +705,7 @@ async function loadCategories() {
 
     collections.forEach(cat => {
       const opt = document.createElement("option");
-      opt.value = cat.id; // ชื่อของ subcollection (CategoryName)
+      opt.value = cat.id;
       opt.textContent = cat.id;
       select.appendChild(opt);
     });
@@ -717,6 +715,7 @@ async function loadCategories() {
 }
 
 
+
 // เพิ่มหมวดหมู่ใหม่
 async function addNewCategory(name) {
   if (!name.trim()) return alert("กรุณาใส่ชื่อหมวดหมู่");
@@ -724,11 +723,11 @@ async function addNewCategory(name) {
   if (!user) return alert("ยังไม่ได้เข้าสู่ระบบ");
 
   try {
-    // 🔥 หมวดหมู่คือ subcollection ใต้ Users/{uid}
-    const categoryRef = collection(db, "Users", user.uid, name);
+    // 🔥 Path: Users/{uid}/{CategoryName}/_init
+    const categoryRef = doc(db, "Users", user.uid, name, "_init");
 
-    // เพิ่ม dummy doc เพื่อให้ collection ถูกสร้างจริงใน Firestore
-    await setDoc(doc(categoryRef, "Activity01"), {
+    // เพิ่ม dummy doc เพื่อให้ subcollection ถูกสร้างจริง
+    await setDoc(categoryRef, {
       createdAt: new Date(),
     });
 
@@ -740,6 +739,7 @@ async function addNewCategory(name) {
     console.error("❌ เพิ่มหมวดหมู่ล้มเหลว:", err);
   }
 }
+
 
 
 
@@ -800,6 +800,7 @@ async function saveActivityToFirestore(activityData, categoryName) {
     // 🔥 Path: Users/{uid}/{categoryName}/{autoID}
     const activityRef = collection(db, "Users", user.uid, categoryName);
     await addDoc(activityRef, activityData);
+
     console.log("✅ บันทึกกิจกรรมสำเร็จ");
   } catch (err) {
     console.error("❌ บันทึกกิจกรรมล้มเหลว:", err);
