@@ -673,8 +673,8 @@ repeatForever.addEventListener('change', () => {
 
 
 document.getElementById("saveEventBtn").addEventListener("click", async () => {
-  const name = document.getElementById("eventName").value;
-  const note = document.getElementById("eventNote").value;
+  const name = document.getElementById("eventTitle").value;
+  const note = document.getElementById("eventNotes").value;
   const allday = document.getElementById("allDayToggle").checked;
   const startDate = document.getElementById("startDate").value;
   const endDate = document.getElementById("endDate").value;
