@@ -784,9 +784,9 @@ document.getElementById("saveEventBtn").addEventListener("click", async () => {
 async function saveActivityToFirestore(activityData, categoryName) {
   const user = auth.currentUser;
 
-  console.log("ผู้ใช้ปัจจุบัน:", user);
-  console.log("ข้อมูลกิจกรรมที่จะบันทึก:", activityData);
-  console.log("หมวดหมู่กิจกรรม:", categoryName);
+  console.log("ผู้ใช้ปัจจุบัน:", user.uid);
+  console.log("หมวดหมู่:", categoryName);
+
 
   if (!user) {
     alert("ยังไม่ได้เข้าสู่ระบบ");
@@ -811,9 +811,7 @@ async function saveActivityToFirestore(activityData, categoryName) {
 // ✅ โหลดกิจกรรมจาก Firestore ตามวัน
 async function loadActivitiesByDate(targetDate, categoryName) {
 
-  console.log("กำลังโหลดกิจกรรมสำหรับวันที่:", targetDate, "ในหมวดหมู่:", categoryName);
-  console.log("ผู้ใช้ปัจจุบัน:", auth.currentUser);
-  console.log("ฐานข้อมูล Firestore:", db);
+
   const user = auth.currentUser;
   if (!user) return [];
 
