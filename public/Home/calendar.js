@@ -720,8 +720,7 @@ async function saveActivityToFirestore(activityData) {
       db,
       "Users",
       user.uid,
-      "Category",
-      "Activities"
+      "Category"
     );
 
     const newActivityRef = doc(activitiesRef); // สร้าง doc ใหม่ใน collection "Activities"
@@ -764,8 +763,7 @@ async function loadActivitiesByDate(targetDate) {
       db,
       "Users",
       user.uid,
-      "Category",
-      "Activities"
+      "Category"
     );
 
     const querySnapshot = await getDocs(activitiesRef);
