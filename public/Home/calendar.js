@@ -715,11 +715,17 @@ async function saveActivityToFirestore(activityData) {
   }
 
   try {
-    // 👉 โครงสร้าง: Users/{uid}/Category/{email}/Activities/{autoID}
-    const categoryDocRef = doc(db, "Users", user.uid, "Category", user.email);
-    const activitiesRef = collection(categoryDocRef, "Activities");
+    // ✅ โครงสร้าง: Users/{uid}/Category/{email}/Activities/{autoID}
+    const activitiesRef = collection(
+      db,
+      "Users",
+      user.uid,
+      "Category",
+      user.email,
+      "Activities"
+    );
 
-    const newActivityRef = doc(activitiesRef);
+    const newActivityRef = doc(activitiesRef); // สร้าง doc ใหม่ใน collection "Activities"
 
     await setDoc(newActivityRef, {
       Name: activityData.name || "กิจกรรมใหม่",
@@ -754,9 +760,15 @@ async function loadActivitiesByDate(targetDate) {
   if (!user) return [];
 
   try {
-    // 👉 โครงสร้าง: Users/{uid}/Category/{email}/Activities
-    const categoryDocRef = doc(db, "Users", user.uid, "Category", user.email);
-    const activitiesRef = collection(categoryDocRef, "Activities");
+    // ✅ โครงสร้าง: Users/{uid}/Category/{email}/Activities
+    const activitiesRef = collection(
+      db,
+      "Users",
+      user.uid,
+      "Category",
+      user.email,
+      "Activities"
+    );
 
     const querySnapshot = await getDocs(activitiesRef);
     const activities = [];
@@ -776,7 +788,6 @@ async function loadActivitiesByDate(targetDate) {
     return [];
   }
 }
-
 
 
 
