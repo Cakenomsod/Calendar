@@ -48,7 +48,11 @@ async function saveUserData(user) {
     const docSnap = await getDoc(userRef);
     if (!docSnap.exists()) {
       await setDoc(userRef, { Email: email });
-      await setDoc(collection(db, "Users", uid, "Normal", "01-01-01"), { Info: "Initial document" });
+
+      // ✅ สร้าง document ย่อย Normal/00
+      const normalRef = doc(db, "Users", uid, "Normal", "00");
+      await setDoc(normalRef, { createdAt: new Date(), status: "active" });
+
       console.log("✅ สร้างผู้ใช้ใหม่สำเร็จ:", email);
     } else {
       console.log("ℹ️ ผู้ใช้นี้มีอยู่แล้ว:", email);
