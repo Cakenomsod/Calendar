@@ -507,57 +507,6 @@ async function loadActivitiesByDate(keyDate) {
 
 
 
-/**
- * ดึงกิจกรรมในเดือนก่อนหน้า, เดือนปัจจุบัน, และเดือนถัดไป
- */
-async function loadActivitiesAroundCurrentMonth(categoryName) {
-  const user = auth.currentUser;
-  if (!user) {
-    console.error("❌ ยังไม่มีผู้ใช้ล็อกอิน");
-    return [];
-  }
-
-  // ✅ หาวันที่เริ่มและสิ้นสุดของช่วง 3 เดือน
-  const now = new Date();
-  const firstDayPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const lastDayNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
-
-  // ✅ แปลงเป็น Timestamp ของ Firestore
-  const startRange = Timestamp.fromDate(firstDayPrevMonth);
-  const endRange = Timestamp.fromDate(lastDayNextMonth);
-
-  try {
-    // 🔥 ดึงกิจกรรมจาก collection เฉพาะหมวดหมู่
-    const activityRef = collection(db, "Users", user.uid, categoryName);
-    const q = query(
-      activityRef,
-      where("day.DayStart.Date", ">=", startRange),
-      where("day.DayStart.Date", "<=", endRange)
-    );
-
-    const querySnap = await getDocs(q);
-
-    const activities = [];
-    querySnap.forEach(docSnap => {
-      const data = docSnap.data();
-      activities.push({
-        id: docSnap.id,
-        ...data
-      });
-    });
-
-    console.log(
-      `✅ โหลดกิจกรรมสำเร็จ (${categoryName}):`,
-      activities.length,
-      "รายการ"
-    );
-    return activities;
-  } catch (err) {
-    console.error("🔥 เกิดข้อผิดพลาดในการโหลดกิจกรรม:", err);
-    return [];
-  }
-}
-
 
 
   // ------------------- เพิ่มกิจกรรม -------------------
@@ -569,9 +518,9 @@ async function loadActivitiesAroundCurrentMonth(categoryName) {
   function addActivity() {
   const input = document.getElementById('activityInput');
   const text = input.value.trim();
-  if (text === '') {    
+  if (text === '') {   
+    openAddDetailModal(modalDate); 
     closeActivityModal();
-    openAddDetailModal(modalDate);
   } else{
     sendactivitydatafast("Normal", text);
 
@@ -806,13 +755,11 @@ function listenToActivities(dateObj) {
 }
 
 
-async function sendactivitydatafast (category, text) {
-
+async function sendactivitydatafast(category, text) {
   const user = auth.currentUser;
-  // ส่งข้อมูลไปยังเซิร์ฟเวอร์หรือจัดการข้อมูลที่นี่
   try {
     // ✅ วันที่ปัจจุบัน (ไม่มีเวลา)
-    const today = new Date();
+    const today = modalDate ? new Date(modalDate) : new Date();
     today.setHours(0, 0, 0, 0);
 
     const categoryRef = collection(db, "Users", user.uid, category);
@@ -829,10 +776,15 @@ async function sendactivitydatafast (category, text) {
       time: {},
       notification: false,
       loop: {},
-      createdAt: Timestamp.now()
+      createdAt: Timestamp.now(),
     });
+
+    console.log("✅ บันทึกกิจกรรมสำเร็จในหมวด:", category);
+  } catch (err) {
+    console.error("🔥 เกิดข้อผิดพลาดในการบันทึกกิจกรรม:", err);
   }
 }
+
 
 
 document.getElementById("saveEventBtn").addEventListener("click", async () => {
@@ -854,8 +806,8 @@ document.getElementById("saveEventBtn").addEventListener("click", async () => {
     note,
     allday,
     day: {
-      DayStart: { Date: startDate },
-      DayEnd: { Date: endDate }
+      DayStart: { Date: new Date(startDate) },
+      DayEnd: { Date: new Date(endDate) }
     },
     time: allday
       ? {}
@@ -881,7 +833,7 @@ async function saveActivityToFirestore(activityData, categoryName) {
     // ✅ เพิ่มกิจกรรมใหม่
     await addDoc(categoryRef, activityData);
 
-    console.log("✅ บันทึกกิจกรรมสำเร็จในหมวด:", category);
+    console.log("✅ บันทึกกิจกรรมสำเร็จในหมวด:", categoryName);
   } catch (err) {
     console.error("🔥 เกิดข้อผิดพลาดในการบันทึกกิจกรรม:", err);
   }
