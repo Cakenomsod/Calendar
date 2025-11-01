@@ -1,6 +1,6 @@
 import { auth, signOut, db } from "../src/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, getDocs, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, getDocs, query, where, Timestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
@@ -306,6 +306,7 @@ function selectYearFromModal(year) {
 
 // ------------------- ฟังก์ชัน Modal แสดงกิจกรรม -------------------
 function showActivityModal(dateObj) {
+  listenToActivities(dateObj);
   const modal = document.getElementById('activityModal');
   modalDate = new Date(dateObj);
   document.body.style.overflow = 'hidden';
@@ -787,6 +788,41 @@ async function addNewCategory(categoryName) {
   console.log("✅ เพิ่มหมวดหมู่ใหม่:", categoryName);
 }
 
+function listenToActivities(dateObj) {
+  const user = auth.currentUser;
+  if (!user) return;
+
+  const year = dateObj.getFullYear();
+  const month = dateObj.getMonth();
+  const day = dateObj.getDate();
+
+  const startOfDay = new Date(year, month, day, 0, 0, 0);
+  const endOfDay = new Date(year, month, day, 23, 59, 59);
+
+  const categoryRef = collection(db, "Users", user.uid, "Normal");
+  const q = query(
+    categoryRef,
+    where("day.DayStart.Date", ">=", Timestamp.fromDate(startOfDay)),
+    where("day.DayStart.Date", "<=", Timestamp.fromDate(endOfDay))
+  );
+
+  onSnapshot(q, (snapshot) => {
+    const list = document.getElementById("activityList");
+    list.innerHTML = "";
+
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      const div = document.createElement("div");
+      div.className = "activity-item";
+      div.textContent = `• ${data.name || "(ไม่มีชื่อกิจกรรม)"}`;
+      list.appendChild(div);
+    });
+
+    console.log("♻️ อัปเดตกิจกรรมวันนั้นแบบเรียลไทม์แล้ว");
+  });
+}
+
+
 async function sendactivitydatafast (category, text) {
   console.log("หมวดหมู่", category);
   console.log("ส่งข้อมูลกิจกรรม:", text);
@@ -813,6 +849,8 @@ async function sendactivitydatafast (category, text) {
       loop: {},
       createdAt: Timestamp.now()
     });
+
+    
 
     console.log("✅ บันทึกกิจกรรมสำเร็จในหมวด:", category);
   } catch (err) {
