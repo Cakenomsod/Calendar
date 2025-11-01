@@ -1,46 +1,46 @@
-import { auth, signOut, db } from "../src/firebase.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { doc, setDoc, addDoc, getDocs, collection, listCollections} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+// import { auth, signOut, db } from "../src/firebase.js";
+// import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+// import { doc, setDoc, addDoc, getDocs, collection, listCollections} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
-document.addEventListener("DOMContentLoaded", () => {
-  // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
-  onAuthStateChanged(auth, async (user) => {
-    const userEmailElement = document.getElementById("userEmail");
-    const userInfoDiv = document.querySelector(".user-info");
+// document.addEventListener("DOMContentLoaded", () => {
+//   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
+//   onAuthStateChanged(auth, async (user) => {
+//     const userEmailElement = document.getElementById("userEmail");
+//     const userInfoDiv = document.querySelector(".user-info");
 
-    if (user) {
-      console.log("✅ ผู้ใช้ล็อกอินอยู่:", user.email);
+//     if (user) {
+//       console.log("✅ ผู้ใช้ล็อกอินอยู่:", user.email);
 
-      // แสดงอีเมล
-      userEmailElement.textContent = `Email: ${user.email}`;
+//       // แสดงอีเมล
+//       userEmailElement.textContent = `Email: ${user.email}`;
 
-      // แสดงรูปโปรไฟล์ (ถ้ามี)
-      if (user.photoURL && userInfoDiv) {
-        userInfoDiv.style.setProperty("--user-photo", `url('${user.photoURL}')`);
-        userInfoDiv.classList.add("has-photo");
-      }
+//       // แสดงรูปโปรไฟล์ (ถ้ามี)
+//       if (user.photoURL && userInfoDiv) {
+//         userInfoDiv.style.setProperty("--user-photo", `url('${user.photoURL}')`);
+//         userInfoDiv.classList.add("has-photo");
+//       }
 
-    } else {
-      console.log("❌ ยังไม่ได้เข้าสู่ระบบ → กลับไปหน้า login");
-      window.location.href = "../Login/index.html"; // เปลี่ยน path ตามจริง
-    }
-  });
-});
+//     } else {
+//       console.log("❌ ยังไม่ได้เข้าสู่ระบบ → กลับไปหน้า login");
+//       window.location.href = "../Login/index.html"; // เปลี่ยน path ตามจริง
+//     }
+//   });
+// });
 
-// ปุ่มออกจากระบบ
-const logoutBtn = document.getElementById("logoutBtn");
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", async () => {
-    try {
-      await signOut(auth);
-      localStorage.removeItem("loggedInUser");
-      alert("ออกจากระบบเรียบร้อย");
-      window.location.href = "../Login/index.html";
-    } catch (error) {
-      console.error("ออกจากระบบไม่สำเร็จ:", error);
-    }
-  });
-}
+// // ปุ่มออกจากระบบ
+// const logoutBtn = document.getElementById("logoutBtn");
+// if (logoutBtn) {
+//   logoutBtn.addEventListener("click", async () => {
+//     try {
+//       await signOut(auth);
+//       localStorage.removeItem("loggedInUser");
+//       alert("ออกจากระบบเรียบร้อย");
+//       window.location.href = "../Login/index.html";
+//     } catch (error) {
+//       console.error("ออกจากระบบไม่สำเร็จ:", error);
+//     }
+//   });
+// }
 
 
 const thaiMonths = [
@@ -484,64 +484,7 @@ if (allDayToggle && timeInputsRow) {
 
 
 
-// ------------------- Event listeners -------------------
-function setupEventListeners() {
-  document.getElementById('currentMonth').addEventListener('click', showMonthModal);
-  document.getElementById('closeMonth').addEventListener('click', () => {
-    document.getElementById('monthModal').classList.remove('active');
-  });
 
-  document.getElementById('currentYear').addEventListener('click', showYearModal);
-  document.getElementById('closeYear').addEventListener('click', () => {
-    document.getElementById('YearModal').classList.remove('active');
-  });
-
-  document.getElementById('closeActivity').addEventListener('click', closeActivityModal);
-
-  document.getElementById('Notification').addEventListener('click', NotificationSettings);
-
-  // คลิก background ปิด modal
-  window.onclick = (e) => {
-    if (e.target.classList.contains('modal')) {
-      closeActivityModal();
-      e.target.classList.remove('active');
-    }
-  };
-
-  // Scroll เมาส์ใน body (เฉพาะตอน modal ปิด)
-  window.addEventListener('wheel', (e) => {
-    const modalActive = document.querySelector('.modal.active');
-    if (modalActive) return;
-    if (settingPanel && settingPanel.classList.contains('active')) return;
-    if (e.deltaY > 0) nextMonth();
-    else if (e.deltaY < 0) prevMonth();
-  });
-
-  // Arrow keys
-  window.addEventListener('keydown', (e) => {
-    const modalActive = document.querySelector('.modal.active');
-    if (modalActive) return;
-    if (settingPanel && settingPanel.classList.contains('active')) return;
-    if (e.key === 'ArrowRight') nextMonth();
-    else if (e.key === 'ArrowLeft') prevMonth();
-  });
-
-  // Touch swipe
-  const calendarContainer = document.getElementById('calendarContent');
-  let touchStartX = 0;
-  let touchEndX = 0;
-
-  calendarContainer.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
-  calendarContainer.addEventListener('touchend', e => {
-    const modalActive = document.querySelector('.modal.active');
-    if (modalActive) return;
-    if (settingPanel && settingPanel.classList.contains('active')) return;
-    touchEndX = e.changedTouches[0].screenX;
-    const swipe = touchEndX - touchStartX;
-    if (swipe > 80) prevMonth();
-    else if (swipe < -80) nextMonth();
-  });
-}
 
 
 // ------------------- MODAL เพิ่มกิจกรรมละเอียด -------------------
@@ -720,8 +663,6 @@ async function loadCategories() {
 async function addNewCategory(name) {
   if (!name.trim()) return alert("กรุณาใส่ชื่อหมวดหมู่");
   const user = auth.currentUser;
-  if (!user) return alert("ยังไม่ได้เข้าสู่ระบบ");
-
   try {
     // 🔥 Path: Users/{uid}/{CategoryName}/_init
     const categoryRef = doc(db, "Users", user.uid, name, "_init");
@@ -738,6 +679,7 @@ async function addNewCategory(name) {
   } catch (err) {
     console.error("❌ เพิ่มหมวดหมู่ล้มเหลว:", err);
   }
+  
 }
 
 
@@ -784,64 +726,80 @@ document.getElementById("saveEventBtn").addEventListener("click", async () => {
 
 
 
-async function saveActivityToFirestore(activityData, categoryName) {
-  const user = auth.currentUser;
-
-  console.log("ผู้ใช้ปัจจุบัน:", user.uid);
-  console.log("หมวดหมู่:", categoryName);
 
 
-  if (!user) {
-    alert("ยังไม่ได้เข้าสู่ระบบ");
-    return;
-  }
 
-  try {
-    // 🔥 Path: Users/{uid}/{categoryName}/{autoID}
-    const activityRef = collection(db, "Users", user.uid, categoryName);
-    await addDoc(activityRef, activityData);
 
-    console.log("✅ บันทึกกิจกรรมสำเร็จ");
-  } catch (err) {
-    console.error("❌ บันทึกกิจกรรมล้มเหลว:", err);
-  }
+
+
+
+
+
+
+
+
+
+
+
+
+// ------------------- Event listeners -------------------
+function setupEventListeners() {
+  document.getElementById('currentMonth').addEventListener('click', showMonthModal);
+  document.getElementById('closeMonth').addEventListener('click', () => {
+    document.getElementById('monthModal').classList.remove('active');
+  });
+
+  document.getElementById('currentYear').addEventListener('click', showYearModal);
+  document.getElementById('closeYear').addEventListener('click', () => {
+    document.getElementById('YearModal').classList.remove('active');
+  });
+
+  document.getElementById('closeActivity').addEventListener('click', closeActivityModal);
+
+  document.getElementById('Notification').addEventListener('click', NotificationSettings);
+
+  // คลิก background ปิด modal
+  window.onclick = (e) => {
+    if (e.target.classList.contains('modal')) {
+      closeActivityModal();
+      e.target.classList.remove('active');
+    }
+  };
+
+  // Scroll เมาส์ใน body (เฉพาะตอน modal ปิด)
+  window.addEventListener('wheel', (e) => {
+    const modalActive = document.querySelector('.modal.active');
+    if (modalActive) return;
+    if (settingPanel && settingPanel.classList.contains('active')) return;
+    if (e.deltaY > 0) nextMonth();
+    else if (e.deltaY < 0) prevMonth();
+  });
+
+  // Arrow keys
+  window.addEventListener('keydown', (e) => {
+    const modalActive = document.querySelector('.modal.active');
+    if (modalActive) return;
+    if (settingPanel && settingPanel.classList.contains('active')) return;
+    if (e.key === 'ArrowRight') nextMonth();
+    else if (e.key === 'ArrowLeft') prevMonth();
+  });
+
+  // Touch swipe
+  const calendarContainer = document.getElementById('calendarContent');
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  calendarContainer.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+  calendarContainer.addEventListener('touchend', e => {
+    const modalActive = document.querySelector('.modal.active');
+    if (modalActive) return;
+    if (settingPanel && settingPanel.classList.contains('active')) return;
+    touchEndX = e.changedTouches[0].screenX;
+    const swipe = touchEndX - touchStartX;
+    if (swipe > 80) prevMonth();
+    else if (swipe < -80) nextMonth();
+  });
 }
-
-
-
-
-
-
-// ✅ โหลดกิจกรรมจาก Firestore ตามวัน
-async function loadActivitiesByDate(targetDate, categoryName) {
-
-
-  const user = auth.currentUser;
-  if (!user) return [];
-
-  try {
-    // ✅ path: Users/{uid}/{Categoryname}
-    const activitiesRef = collection(db, "Users", user.uid, categoryName);
-    const querySnapshot = await getDocs(activitiesRef);
-
-    const activities = [];
-    querySnapshot.forEach((docSnap) => {
-      const data = docSnap.data();
-      const dayStart = data?.Day?.DayStart?.Date;
-
-      if (dayStart === targetDate) {
-        activities.push({ id: docSnap.id, ...data });
-      }
-    });
-
-    return activities;
-  } catch (error) {
-    console.error("❌ โหลดกิจกรรมไม่สำเร็จ:", error);
-    return [];
-  }
-}
-
-
 
 // เริ่มทำงานหลัง DOM โหลดครบ
 document.addEventListener("DOMContentLoaded", () => {

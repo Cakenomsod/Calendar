@@ -48,6 +48,7 @@ async function saveUserData(user) {
     const docSnap = await getDoc(userRef);
     if (!docSnap.exists()) {
       await setDoc(userRef, { Email: email });
+      await setDoc(userRef, "Normal", "01");
       console.log("✅ สร้างผู้ใช้ใหม่สำเร็จ:", email);
     } else {
       console.log("ℹ️ ผู้ใช้นี้มีอยู่แล้ว:", email);
@@ -56,3 +57,4 @@ async function saveUserData(user) {
     console.error("🔥 เกิดข้อผิดพลาดในการบันทึกข้อมูลผู้ใช้:", err);
   }
 }
+
