@@ -640,7 +640,7 @@ document.getElementById("saveCategoryBtn").addEventListener("click", () => {
 });
 
 // โหลดหมวดหมู่ทุกครั้งเมื่อเปิด modal เพิ่มกิจกรรม
-document.getElementById("addDetailActivityModal").addEventListener("click", loadCategories);
+document.getElementById("categorySelect").addEventListener("click", loadCategories);
 
 
 
@@ -651,11 +651,6 @@ document.getElementById("addDetailActivityModal").addEventListener("click", load
 // โหลดหมวดหมู่ทั้งหมดของผู้ใช้
 async function loadCategories() {
   const user = auth.currentUser;
-  if (!user) {
-    console.error("❌ ยังไม่มีผู้ใช้ล็อกอิน");
-    return;
-  }
-
   try {
     const userRef = doc(db, "Users", user.uid);
     const userSnap = await getDoc(userRef);
