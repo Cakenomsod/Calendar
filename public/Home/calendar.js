@@ -1,6 +1,6 @@
 import { auth, signOut, db } from "../src/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { addDoc, collection} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getDoc, addDoc, collection} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
