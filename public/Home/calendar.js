@@ -1,6 +1,6 @@
 import { auth, signOut, db } from "../src/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { addDoc, collection, listCollections } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { addDoc, collection} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
@@ -652,9 +652,10 @@ document.getElementById("addDetailActivityModal").addEventListener("click", load
 async function loadCategories() {
   const user = auth.currentUser;
 
+
   try {
     const userRef = doc(db, "Users", user.uid);
-    const subcollections = await listCollections(userRef); // ✅ ใช้ listCollections แทน getDocs()
+    const subcollections = await getDoc(userRef);
 
     const select = document.getElementById("categorySelect");
     select.innerHTML = '<option value="">-- เลือกหมวดหมู่ --</option>';
