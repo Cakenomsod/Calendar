@@ -1,5 +1,5 @@
 import { auth, db, provider, signInWithPopup } from "../src/firebase.js";
-import { doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { doc, setDoc, getDoc, collection} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 localStorage.removeItem("loggedInUser");
 
@@ -48,7 +48,7 @@ async function saveUserData(user) {
     const docSnap = await getDoc(userRef);
     if (!docSnap.exists()) {
       await setDoc(userRef, { Email: email });
-      await setDoc(userRef, "Normal", "01");
+      await setDoc(collection(db, "Users", uid, "Normal", "01-01-01"), { Info: "Initial document" });
       console.log("✅ สร้างผู้ใช้ใหม่สำเร็จ:", email);
     } else {
       console.log("ℹ️ ผู้ใช้นี้มีอยู่แล้ว:", email);
