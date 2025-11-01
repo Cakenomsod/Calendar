@@ -1,6 +1,6 @@
 import { auth, signOut, db } from "../src/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { addDoc, collection} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { addDoc, collection, listCollections } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
@@ -646,16 +646,40 @@ document.getElementById("addDetailActivityModal").addEventListener("click", load
 
 
 
+// ========= ระบบหมวดหมู่ =========
 
+// โหลดหมวดหมู่ทั้งหมดของผู้ใช้
+async function loadCategories() {
+  const user = auth.currentUser;
 
+  try {
+    const userRef = doc(db, "Users", user.uid);
+    const subcollections = await listCollections(userRef); // ✅ ใช้ listCollections แทน getDocs()
 
-async function sendactivitydata (uid, category, text) {
+    const select = document.getElementById("categorySelect");
+    select.innerHTML = '<option value="">-- เลือกหมวดหมู่ --</option>';
+
+    subcollections.forEach(cat => {
+      const opt = document.createElement("option");
+      opt.value = cat.id;
+      opt.textContent = cat.id;
+      select.appendChild(opt);
+    });
+
+    console.log("✅ โหลดหมวดหมู่สำเร็จ:", subcollections.map(c => c.id));
+  } catch (err) {
+    console.error("❌ โหลดหมวดหมู่ล้มเหลว:", err);
+  }
+}
+
+async function sendactivitydata (category, text) {
   console.log("หมวดหมู่", category);
   console.log("ส่งข้อมูลกิจกรรม:", text);
+  const user = auth.currentUser;
   // ส่งข้อมูลไปยังเซิร์ฟเวอร์หรือจัดการข้อมูลที่นี่
   try {
     // อ้างอิงไปที่ collection ของหมวดหมู่ใน Users/{uid}
-    const categoryRef = collection(db, "Users", uid, category);
+    const categoryRef = collection(db, "Users", user.uid, category);
 
     // เพิ่มกิจกรรมใหม่ (Firestore จะสร้าง id อัตโนมัติ)
     await addDoc(categoryRef, {
