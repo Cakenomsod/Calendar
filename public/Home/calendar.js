@@ -1,6 +1,6 @@
 import { auth, signOut, db } from "../src/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, Timestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
@@ -457,7 +457,61 @@ async function renderActivityInModal() {
   }
 }
 
+async function loadActivitiesByDate(keyDate) {
+  return []; // ยังไม่ต้องทำตอนนี้
+}
 
+
+/**
+ * ดึงกิจกรรมในเดือนก่อนหน้า, เดือนปัจจุบัน, และเดือนถัดไป
+ */
+async function loadActivitiesAroundCurrentMonth(categoryName) {
+  const user = auth.currentUser;
+  if (!user) {
+    console.error("❌ ยังไม่มีผู้ใช้ล็อกอิน");
+    return [];
+  }
+
+  // ✅ หาวันที่เริ่มและสิ้นสุดของช่วง 3 เดือน
+  const now = new Date();
+  const firstDayPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastDayNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+
+  // ✅ แปลงเป็น Timestamp ของ Firestore
+  const startRange = Timestamp.fromDate(firstDayPrevMonth);
+  const endRange = Timestamp.fromDate(lastDayNextMonth);
+
+  try {
+    // 🔥 ดึงกิจกรรมจาก collection เฉพาะหมวดหมู่
+    const activityRef = collection(db, "Users", user.uid, categoryName);
+    const q = query(
+      activityRef,
+      where("day.DayStart.Date", ">=", startRange),
+      where("day.DayStart.Date", "<=", endRange)
+    );
+
+    const querySnap = await getDocs(q);
+
+    const activities = [];
+    querySnap.forEach(docSnap => {
+      const data = docSnap.data();
+      activities.push({
+        id: docSnap.id,
+        ...data
+      });
+    });
+
+    console.log(
+      `✅ โหลดกิจกรรมสำเร็จ (${categoryName}):`,
+      activities.length,
+      "รายการ"
+    );
+    return activities;
+  } catch (err) {
+    console.error("🔥 เกิดข้อผิดพลาดในการโหลดกิจกรรม:", err);
+    return [];
+  }
+}
 
 
 
@@ -474,12 +528,10 @@ async function renderActivityInModal() {
     closeActivityModal();
     openAddDetailModal(modalDate);
   } else{
-    sendactivitydata("Normal", text);
+    sendactivitydatafast("Normal", text);
 
     input.value = '';
   }; // เปิดหน้าต่างเพิ่มกิจกรรมแบบระเอียด
-
-
   }
 
 
@@ -506,8 +558,7 @@ if (allDayToggle && timeInputsRow) {
 const addDetailModal = document.getElementById('addDetailActivityModal');
 const closeAddDetailModal = document.getElementById('closeAddDetailModal');
 const cancelEventBtn = document.getElementById('cancelEventBtn');
-const repeatToggle = document.getElementById('repeatToggle');
-const repeatOptions = document.getElementById('repeatOptions');
+
 
 function openAddDetailModal(dateObj = null) {
   addDetailModal.classList.add('active');
@@ -692,19 +743,31 @@ async function addNewCategory(categoryName) {
   console.log("✅ เพิ่มหมวดหมู่ใหม่:", categoryName);
 }
 
-async function sendactivitydata (category, text) {
+async function sendactivitydatafast (category, text) {
   console.log("หมวดหมู่", category);
   console.log("ส่งข้อมูลกิจกรรม:", text);
   const user = auth.currentUser;
   // ส่งข้อมูลไปยังเซิร์ฟเวอร์หรือจัดการข้อมูลที่นี่
   try {
-    // อ้างอิงไปที่ collection ของหมวดหมู่ใน Users/{uid}
+    // ✅ วันที่ปัจจุบัน (ไม่มีเวลา)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
     const categoryRef = collection(db, "Users", user.uid, category);
 
-    // เพิ่มกิจกรรมใหม่ (Firestore จะสร้าง id อัตโนมัติ)
+    // ✅ เพิ่มกิจกรรมใหม่
     await addDoc(categoryRef, {
       name: text,
-      createdAt: new Date(),
+      note: "",
+      day: {
+        DayStart: { Date: Timestamp.fromDate(today) },
+        DayEnd: { Date: Timestamp.fromDate(today) }
+      },
+      allday: true,
+      time: {},
+      notification: false,
+      loop: {},
+      createdAt: Timestamp.now()
     });
 
     console.log("✅ บันทึกกิจกรรมสำเร็จในหมวด:", category);
