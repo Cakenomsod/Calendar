@@ -46,12 +46,20 @@ async function saveUserData(user) {
 
   try {
     const docSnap = await getDoc(userRef);
-    if (!docSnap.exists()) {
-      await setDoc(userRef, { Email: email });
 
-      // ✅ สร้าง document ย่อย Normal/00
+    if (!docSnap.exists()) {
+      // ✅ สร้าง document หลักของผู้ใช้
+      await setDoc(userRef, {
+        Email: email,
+        createdAt: new Date(),
+        categories: ["Normal"], // เพิ่ม array เก็บหมวดหมู่เริ่มต้น
+      });
+
+      // ✅ สร้าง subcollection "Normal" และ document "00"
       const normalRef = doc(db, "Users", uid, "Normal", "00");
-      await setDoc(normalRef, { createdAt: new Date()});
+      await setDoc(normalRef, {
+        createdAt: new Date(),
+      });
 
       console.log("✅ สร้างผู้ใช้ใหม่สำเร็จ:", email);
     } else {
@@ -61,4 +69,3 @@ async function saveUserData(user) {
     console.error("🔥 เกิดข้อผิดพลาดในการบันทึกข้อมูลผู้ใช้:", err);
   }
 }
-

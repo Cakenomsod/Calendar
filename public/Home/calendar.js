@@ -1,6 +1,6 @@
 import { auth, signOut, db } from "../src/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { getDoc, addDoc, collection} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getDoc, addDoc, collection, setDoc} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
@@ -634,8 +634,8 @@ document.getElementById("closeAddCategoryModal").addEventListener("click", () =>
 });
 
 document.getElementById("saveCategoryBtn").addEventListener("click", () => {
-  const newCat = document.getElementById("newCategoryName").value.trim();
-  addNewCategory(newCat);
+  const categoryName = document.getElementById("newCategoryName").value.trim();
+  addNewCategory(categoryName);
   document.getElementById("newCategoryName").value = "";
 });
 
@@ -651,26 +651,50 @@ document.getElementById("addDetailActivityModal").addEventListener("click", load
 // โหลดหมวดหมู่ทั้งหมดของผู้ใช้
 async function loadCategories() {
   const user = auth.currentUser;
-
+  if (!user) {
+    console.error("❌ ยังไม่มีผู้ใช้ล็อกอิน");
+    return;
+  }
 
   try {
     const userRef = doc(db, "Users", user.uid);
-    const subcollections = await getDoc(userRef);
+    const userSnap = await getDoc(userRef);
 
-    const select = document.getElementById("categorySelect");
-    select.innerHTML = '<option value="">-- เลือกหมวดหมู่ --</option>';
+    if (userSnap.exists()) {
+      const data = userSnap.data();
+      const categories = data.categories || []; // ดึง array หมวดหมู่
 
-    subcollections.forEach(cat => {
-      const opt = document.createElement("option");
-      opt.value = cat.id;
-      opt.textContent = cat.id;
-      select.appendChild(opt);
-    });
+      const select = document.getElementById("categorySelect");
+      select.innerHTML = '<option value="">-- เลือกหมวดหมู่ --</option>';
 
-    console.log("✅ โหลดหมวดหมู่สำเร็จ:", subcollections.map(c => c.id));
+      categories.forEach(cat => {
+        const opt = document.createElement("option");
+        opt.value = cat;
+        opt.textContent = cat;
+        select.appendChild(opt);
+      });
+
+      console.log("✅ โหลดหมวดหมู่สำเร็จ:", categories);
+    } else {
+      console.log("⚠️ ไม่พบข้อมูลผู้ใช้ใน Firestore");
+    }
   } catch (err) {
     console.error("❌ โหลดหมวดหมู่ล้มเหลว:", err);
   }
+}
+
+async function addNewCategory(categoryName) {
+  const user = auth.currentUser;
+  const userRef = doc(db, "Users", user.uid);
+  await updateDoc(userRef, {
+    categories: arrayUnion(categoryName)
+  });
+
+  // สร้าง subcollection หมวดหมู่นั้น (optional)
+  const catRef = doc(db, "Users", user.uid, categoryName, "init");
+  await setDoc(catRef, { createdAt: new Date() });
+
+  console.log("✅ เพิ่มหมวดหมู่ใหม่:", categoryName);
 }
 
 async function sendactivitydata (category, text) {
