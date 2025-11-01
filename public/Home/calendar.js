@@ -457,9 +457,53 @@ async function renderActivityInModal() {
   }
 }
 
+// ✅ ดึงกิจกรรมทั้งหมดของผู้ใช้ในหมวด Normal เฉพาะวันที่ที่เลือก
 async function loadActivitiesByDate(keyDate) {
-  return []; // ยังไม่ต้องทำตอนนี้
+  const user = auth.currentUser;
+  if (!user) {
+    console.error("❌ ยังไม่มีผู้ใช้ล็อกอิน");
+    return [];
+  }
+
+  try {
+    // 🔥 ดึงกิจกรรมทั้งหมดในหมวด Normal
+    const categoryRef = collection(db, "Users", user.uid, "Normal");
+    const querySnap = await getDocs(categoryRef);
+
+    const activities = [];
+
+    querySnap.forEach((docSnap) => {
+      const data = docSnap.data();
+
+      // ถ้ามีฟิลด์ day.DayStart.Date ให้แปลงเป็น YYYY-MM-DD เพื่อเปรียบเทียบ
+      if (data.day?.DayStart?.Date) {
+        const start = data.day.DayStart.Date.toDate();
+
+        const y = start.getFullYear();
+        const m = String(start.getMonth() + 1).padStart(2, "0");
+        const d = String(start.getDate()).padStart(2, "0");
+        const formatted = `${y}-${m}-${d}`;
+
+        // ✅ กรองเฉพาะกิจกรรมที่ตรงกับ keyDate
+        if (formatted === keyDate) {
+          activities.push({
+            id: docSnap.id,
+            Name: data.name || "(ไม่มีชื่อกิจกรรม)",
+            note: data.note || "",
+          });
+        }
+      }
+    });
+
+    console.log(`📅 พบกิจกรรมวันที่ ${keyDate}:`, activities.length);
+    return activities;
+
+  } catch (err) {
+    console.error("🔥 เกิดข้อผิดพลาดในการโหลดกิจกรรม:", err);
+    return [];
+  }
 }
+
 
 
 /**
