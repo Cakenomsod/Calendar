@@ -1,6 +1,6 @@
 import { auth, signOut, db } from "../src/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { doc, setDoc, addDoc, getDocs, collection, listCollections} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { addDoc, collection} from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
@@ -98,6 +98,8 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
+
 
 
 // ------------------- สร้าง HTML เดือน -------------------
@@ -294,6 +296,14 @@ function selectYearFromModal(year) {
 }
 
 
+
+
+
+
+
+
+
+
 // ------------------- ฟังก์ชัน Modal แสดงกิจกรรม -------------------
 function showActivityModal(dateObj) {
   const modal = document.getElementById('activityModal');
@@ -448,6 +458,9 @@ async function renderActivityInModal() {
 }
 
 
+
+
+
   // ------------------- เพิ่มกิจกรรม -------------------
   document.getElementById('addActivityBtn').addEventListener('click', addActivity);
   document.getElementById('activityInput').addEventListener('keypress', (e) => {
@@ -457,14 +470,16 @@ async function renderActivityInModal() {
   function addActivity() {
   const input = document.getElementById('activityInput');
   const text = input.value.trim();
-  if (text === '') return; // เปิดหน้าต่างเพิ่มกิจกรรมแบบระเอียด
+  if (text === '') {    
+    closeActivityModal();
+    openAddDetailModal(modalDate);
+  } else{
+    sendactivitydata("Normal", text);
 
-  const div = document.createElement('div');
-  div.className = 'activity-item';
-  div.textContent = `• ${text}`;
-  document.getElementById('activityList').appendChild(div);
+    input.value = '';
+  }; // เปิดหน้าต่างเพิ่มกิจกรรมแบบระเอียด
 
-  input.value = '';
+
   }
 
 
@@ -525,14 +540,6 @@ function closeAddDetailActivityModal() {
 closeAddDetailModal.addEventListener('click', closeAddDetailActivityModal);
 cancelEventBtn.addEventListener('click', closeAddDetailActivityModal);
 
-// เมื่อกด + ตอนช่องว่าง
-document.getElementById('addActivityBtn').addEventListener('click', () => {
-  const input = document.getElementById('activityInput');
-  if (input.value.trim() === '') {
-    closeActivityModal();
-    openAddDetailModal(modalDate);
-  }
-});
 
 const Notification = document.getElementById('Notification');
 const NotificationModal = document.getElementById('NotificationModal');
@@ -545,6 +552,9 @@ Notification.addEventListener('click', () => {
 closeNotificationModal.addEventListener('click', () => {
   NotificationModal.classList.remove('active');
 });
+
+
+
 
 // ฟังก์ชันสร้าง notification item
 function createNotificationItem(listContainer) {
@@ -564,6 +574,8 @@ function createNotificationItem(listContainer) {
   div.querySelector('.remove-btn').addEventListener('click', () => div.remove());
   listContainer.appendChild(div);
 }
+
+
 
 // ก่อนเริ่มกิจกรรม
 const beforeStartList = document.getElementById('beforeStartList');
@@ -632,110 +644,69 @@ document.getElementById("addDetailActivityModal").addEventListener("click", load
 
 
 
-// ========= ระบบหมวดหมู่ =========
 
-// โหลดหมวดหมู่ทั้งหมดของผู้ใช้
-async function loadCategories() {
-  const user = auth.currentUser;
-  if (!user) return;
 
+
+
+
+async function sendactivitydata (uid, category, text) {
+  console.log("หมวดหมู่", category);
+  console.log("ส่งข้อมูลกิจกรรม:", text);
+  // ส่งข้อมูลไปยังเซิร์ฟเวอร์หรือจัดการข้อมูลที่นี่
   try {
-    const userRef = doc(db, "Users", user.uid);
-    const collections = await listCollections(userRef);
+    // อ้างอิงไปที่ collection ของหมวดหมู่ใน Users/{uid}
+    const categoryRef = collection(db, "Users", uid, category);
 
-    const select = document.getElementById("categorySelect");
-    select.innerHTML = '<option value="">-- เลือกหมวดหมู่ --</option>';
-
-    collections.forEach(cat => {
-      const opt = document.createElement("option");
-      opt.value = cat.id;
-      opt.textContent = cat.id;
-      select.appendChild(opt);
-    });
-  } catch (err) {
-    console.error("❌ โหลดหมวดหมู่ล้มเหลว:", err);
-  }
-}
-
-
-
-// เพิ่มหมวดหมู่ใหม่
-async function addNewCategory(name) {
-  if (!name.trim()) return alert("กรุณาใส่ชื่อหมวดหมู่");
-  const user = auth.currentUser;
-  try {
-    // 🔥 Path: Users/{uid}/{CategoryName}/_init
-    const categoryRef = doc(db, "Users", user.uid, name, "_init");
-
-    // เพิ่ม dummy doc เพื่อให้ subcollection ถูกสร้างจริง
-    await setDoc(categoryRef, {
+    // เพิ่มกิจกรรมใหม่ (Firestore จะสร้าง id อัตโนมัติ)
+    await addDoc(categoryRef, {
+      name: text,
       createdAt: new Date(),
     });
 
-    alert("เพิ่มหมวดหมู่สำเร็จ!");
-    document.getElementById("addCategoryModal").classList.remove("active");
-
-    await loadCategories();
+    console.log("✅ บันทึกกิจกรรมสำเร็จในหมวด:", category);
   } catch (err) {
-    console.error("❌ เพิ่มหมวดหมู่ล้มเหลว:", err);
+    console.error("🔥 เกิดข้อผิดพลาดในการบันทึกกิจกรรม:", err);
   }
-
 }
 
 
 
 
+// document.getElementById("saveEventBtn").addEventListener("click", async () => {
+//   const name = document.getElementById("eventTitle").value;
+//   const note = document.getElementById("eventNotes").value;
+//   const allday = document.getElementById("allDayToggle").checked;
+//   const startDate = document.getElementById("startDate").value;
+//   const endDate = document.getElementById("endDate").value;
+//   const startTime = document.getElementById("startTime").value;
+//   const endTime = document.getElementById("endTime").value;
 
-document.getElementById("saveEventBtn").addEventListener("click", async () => {
-  const name = document.getElementById("eventTitle").value;
-  const note = document.getElementById("eventNotes").value;
-  const allday = document.getElementById("allDayToggle").checked;
-  const startDate = document.getElementById("startDate").value;
-  const endDate = document.getElementById("endDate").value;
-  const startTime = document.getElementById("startTime").value;
-  const endTime = document.getElementById("endTime").value;
+//   const categoryName = document.getElementById("categorySelect").value;
+//   if (!categoryName) {
+//     alert("กรุณาเลือกหมวดหมู่ก่อนบันทึกกิจกรรม");
+//     return;
+//   }
 
-  const categoryName = document.getElementById("categorySelect").value;
-  if (!categoryName) {
-    alert("กรุณาเลือกหมวดหมู่ก่อนบันทึกกิจกรรม");
-    return;
-  }
+//   const activityData = {
+//     name,
+//     note,
+//     allday,
+//     day: {
+//       DayStart: { Date: startDate },
+//       DayEnd: { Date: endDate }
+//     },
+//     time: allday
+//       ? {}
+//       : {
+//           TimeStart: { Hour: +startTime.split(":")[0], Minute: +startTime.split(":")[1] },
+//           TimeEnd: { Hour: +endTime.split(":")[0], Minute: +endTime.split(":")[1] }
+//         },
+//     notification: false,
+//     loop: {},
+//   };
 
-  const activityData = {
-    name,
-    note,
-    allday,
-    day: {
-      DayStart: { Date: startDate },
-      DayEnd: { Date: endDate }
-    },
-    time: allday
-      ? {}
-      : {
-          TimeStart: { Hour: +startTime.split(":")[0], Minute: +startTime.split(":")[1] },
-          TimeEnd: { Hour: +endTime.split(":")[0], Minute: +endTime.split(":")[1] }
-        },
-    notification: false,
-    loop: {},
-  };
-
-  await saveActivityToFirestore(activityData, categoryName);
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//   await saveActivityToFirestore(activityData, categoryName);
+// });
 
 
 

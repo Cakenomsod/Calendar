@@ -51,7 +51,7 @@ async function saveUserData(user) {
 
       // ✅ สร้าง document ย่อย Normal/00
       const normalRef = doc(db, "Users", uid, "Normal", "00");
-      await setDoc(normalRef, { createdAt: new Date(), status: "active" });
+      await setDoc(normalRef, { createdAt: new Date()});
 
       console.log("✅ สร้างผู้ใช้ใหม่สำเร็จ:", email);
     } else {
