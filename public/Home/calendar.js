@@ -800,11 +800,12 @@ async function saveActivityToFirestore(activityData, categoryName) {
     await addDoc(categoryRef, activityData);
 
     console.log("✅ บันทึกกิจกรรมสำเร็จในหมวด:", categoryName);
+    showActivityModal(selectedDate);
   } catch (err) {
     console.error("🔥 เกิดข้อผิดพลาดในการบันทึกกิจกรรม:", err);
   }
 
-  showActivityModal(selectedDate);
+
 }
 
 
