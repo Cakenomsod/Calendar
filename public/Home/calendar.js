@@ -417,7 +417,6 @@ function setupDayClick() {
 
       const selectedDate = new Date(year, month, day);
       showActivityModal(selectedDate);
-      cancelEventBtn.addEventListener('click', showActivityModal(selectedDate));
     });
   });
 }
@@ -514,7 +513,6 @@ async function loadActivitiesByDate(keyDate) {
   const text = input.value.trim();
   if (text === '') {   
     openAddDetailModal(modalDate); 
-    closeActivityModal();
   } else{
     sendactivitydatafast("Normal", text);
 
@@ -786,7 +784,7 @@ document.getElementById("saveEventBtn").addEventListener("click", async () => {
 
   }
   await saveActivityToFirestore(activityData, categoryName);
-  setupDayClick();
+
 
 })
 
@@ -803,6 +801,8 @@ async function saveActivityToFirestore(activityData, categoryName) {
   } catch (err) {
     console.error("🔥 เกิดข้อผิดพลาดในการบันทึกกิจกรรม:", err);
   }
+
+  setupDayClick();
   
 }
 
@@ -842,12 +842,12 @@ function setupEventListeners() {
 
   document.getElementById("categorySelect").addEventListener("click", loadCategories);
 
+
+
   function closeAddDetailActivityModal() {
-  addDetailModal.classList.remove('active');
-  document.body.style.overflow = '';
-}
-
-
+    addDetailModal.classList.remove('active');
+    document.body.style.overflow = '';
+  }
 
   // ปุ่มปิด
   closeAddDetailModal.addEventListener('click', closeAddDetailActivityModal);
