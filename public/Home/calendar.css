@@ -152,7 +152,7 @@ header {
   opacity: 0;
   transition: all 0.4s ease;
   pointer-events: none;
-  z-index: 1500;
+  z-index: 500;
 }
 
 .overlay.active {
@@ -405,7 +405,6 @@ header {
     background: rgba(0,0,0,0.5);
     justify-content: center;
     align-items: center;
-    z-index: 1000;
 }
 
 .modal.active {
@@ -916,6 +915,9 @@ textarea#eventNotes {
   background: #ccc;
 }
 
+#addDetailActivityModal .modal-content {
+  z-index: 2500 ;
+}
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(-15px); }
