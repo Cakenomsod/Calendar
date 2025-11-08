@@ -297,13 +297,6 @@ function selectYearFromModal(year) {
 
 
 
-
-
-
-
-
-
-
 // ------------------- ฟังก์ชัน Modal แสดงกิจกรรม -------------------
 function showActivityModal(dateObj) {
   listenToActivities(dateObj);
@@ -424,6 +417,7 @@ function setupDayClick() {
 
       const selectedDate = new Date(year, month, day);
       showActivityModal(selectedDate);
+      cancelEventBtn.addEventListener('click', showActivityModal(selectedDate));
     });
   });
 }
@@ -440,7 +434,7 @@ async function renderActivityInModal() {
   const day = modalDate.getDate();
   const keyDate = `${year}-${(month + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
 
-  title.textContent = `กิจกรรมวันที่ ${day} ${thaiMonths[month]} ${year + 543}`;
+  title.textContent = `${day} ${thaiMonths[month]} ${year + 543}`;
   list.innerHTML = "<p style='color:#999;'>กำลังโหลด...</p>";
 
   const events = await loadActivitiesByDate(keyDate);
@@ -546,8 +540,6 @@ if (allDayToggle && timeInputsRow) {
 
 
 
-
-
 // ------------------- MODAL เพิ่มกิจกรรมละเอียด -------------------
 const addDetailModal = document.getElementById('addDetailActivityModal');
 const closeAddDetailModal = document.getElementById('closeAddDetailModal');
@@ -558,7 +550,6 @@ function openAddDetailModal(dateObj = null) {
   addDetailModal.classList.add('active');
   document.body.style.overflow = 'hidden';
   if (dateObj) {
-    // ลบ 1 วันจากวันที่ที่คลิก
     const adjustedDate = new Date(dateObj);
     adjustedDate.setDate(adjustedDate.getDate() + 1);
 
@@ -570,34 +561,6 @@ function openAddDetailModal(dateObj = null) {
     document.getElementById('endTime').value = '10:00';
   }
 }
-
-
-
-
-function closeAddDetailActivityModal() {
-  addDetailModal.classList.remove('active');
-  document.body.style.overflow = '';
-}
-
-
-
-// ปุ่มปิด
-closeAddDetailModal.addEventListener('click', closeAddDetailActivityModal);
-cancelEventBtn.addEventListener('click', closeAddDetailActivityModal);
-
-
-const Notification = document.getElementById('Notification');
-const NotificationModal = document.getElementById('NotificationModal');
-const closeNotificationModal = document.getElementById('closeNotificationModal');
-
-Notification.addEventListener('click', () => {
-  NotificationModal.classList.add('active');
-});
-
-closeNotificationModal.addEventListener('click', () => {
-  NotificationModal.classList.remove('active');
-});
-
 
 
 
@@ -795,6 +758,7 @@ document.getElementById("saveEventBtn").addEventListener("click", async () => {
   const endDate = document.getElementById("endDate").value;
   const startTime = document.getElementById("startTime").value;
   const endTime = document.getElementById("endTime").value;
+  const location = document.getElementById("locationText").value;
 
   let categoryName = document.getElementById("categorySelect").value;
   if(!categoryName){
@@ -818,19 +782,21 @@ document.getElementById("saveEventBtn").addEventListener("click", async () => {
     notification: false,
     loop: {},
     createdAt: new Date(),
+    location,
 
   }
   await saveActivityToFirestore(activityData, categoryName);
+  setupDayClick();
 
 })
+
+
 
 async function saveActivityToFirestore(activityData, categoryName) {
   const user = auth.currentUser;
 
   try {
     const categoryRef = collection(db, "Users", user.uid, categoryName);
-
-    // ✅ เพิ่มกิจกรรมใหม่
     await addDoc(categoryRef, activityData);
 
     console.log("✅ บันทึกกิจกรรมสำเร็จในหมวด:", categoryName);
@@ -842,10 +808,9 @@ async function saveActivityToFirestore(activityData, categoryName) {
 
 
 
-
-
 // ------------------- Event listeners -------------------
 function setupEventListeners() {
+  
   document.getElementById('currentMonth').addEventListener('click', showMonthModal);
   document.getElementById('closeMonth').addEventListener('click', () => {
     document.getElementById('monthModal').classList.remove('active');
@@ -876,6 +841,30 @@ function setupEventListeners() {
   });
 
   document.getElementById("categorySelect").addEventListener("click", loadCategories);
+
+  function closeAddDetailActivityModal() {
+  addDetailModal.classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+
+
+  // ปุ่มปิด
+  closeAddDetailModal.addEventListener('click', closeAddDetailActivityModal);
+  cancelEventBtn.addEventListener('click', closeAddDetailActivityModal);
+
+
+  const Notification = document.getElementById('Notification');
+  const NotificationModal = document.getElementById('NotificationModal');
+  const closeNotificationModal = document.getElementById('closeNotificationModal');
+
+  Notification.addEventListener('click', () => {
+    NotificationModal.classList.add('active');
+  });
+
+  closeNotificationModal.addEventListener('click', () => {
+    NotificationModal.classList.remove('active');
+  });
 
 
   // คลิก background ปิด modal
