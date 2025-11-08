@@ -391,6 +391,7 @@ function renderAllMonths() {
   setupDayClick();
 }
 
+let selectedDate = null;
 
 // ------------------- คลิกเลือกวัน -------------------
 function setupDayClick() {
@@ -415,7 +416,7 @@ function setupDayClick() {
           }
         }
 
-      const selectedDate = new Date(year, month, day);
+      selectedDate = new Date(year, month, day);
       showActivityModal(selectedDate);
     });
   });
@@ -513,6 +514,7 @@ async function loadActivitiesByDate(keyDate) {
   const text = input.value.trim();
   if (text === '') {   
     openAddDetailModal(modalDate); 
+    closeActivityModal();
   } else{
     sendactivitydatafast("Normal", text);
 
@@ -802,8 +804,7 @@ async function saveActivityToFirestore(activityData, categoryName) {
     console.error("🔥 เกิดข้อผิดพลาดในการบันทึกกิจกรรม:", err);
   }
 
-  setupDayClick();
-  
+  showActivityModal(selectedDate);
 }
 
 
@@ -847,6 +848,7 @@ function setupEventListeners() {
   function closeAddDetailActivityModal() {
     addDetailModal.classList.remove('active');
     document.body.style.overflow = '';
+    showActivityModal(selectedDate);
   }
 
   // ปุ่มปิด
