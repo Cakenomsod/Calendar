@@ -799,7 +799,11 @@ async function saveActivityToFirestore(activityData, categoryName) {
     const categoryRef = collection(db, "Users", user.uid, categoryName);
     await addDoc(categoryRef, activityData);
 
+
     console.log("✅ บันทึกกิจกรรมสำเร็จในหมวด:", categoryName);
+
+    addDetailModal.classList.remove('active');
+    document.body.style.overflow = '';
     showActivityModal(selectedDate);
   } catch (err) {
     console.error("🔥 เกิดข้อผิดพลาดในการบันทึกกิจกรรม:", err);
