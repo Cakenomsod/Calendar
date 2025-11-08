@@ -916,11 +916,11 @@ textarea#eventNotes {
 }
 
 #addDetailActivityModal .modal-content {
-  z-index: 2500 ;
+  z-index: 1500 ;
 }
 
 #activityModal .modal-content {
-  z-index: 1500;
+  z-index: 1000;
 }
 
 @keyframes fadeIn {
