@@ -1,6 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getAuth, GoogleAuthProvider, signOut, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-messaging.js";
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyCmIfvAGrk-rRCtYxCp3XmnUM61mKUtgsY",
@@ -18,3 +20,8 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
 export { app, db, auth, provider, signInWithPopup, signOut };
+
+
+const messaging = getMessaging(app);
+
+export { messaging, getToken, onMessage };

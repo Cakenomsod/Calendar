@@ -1,7 +1,9 @@
 import { auth, signOut, db } from "../src/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, getDocs, query, where, Timestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { messaging, getToken } from "../firebase.js";
 
+  
 document.addEventListener("DOMContentLoaded", () => {
   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
   onAuthStateChanged(auth, async (user) => {
@@ -123,6 +125,35 @@ async function init() {
       }
     });
   }, 60000);
+
+
+  async function initFCM() {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission !== "granted") {
+        alert("กรุณาอนุญาตให้แจ้งเตือนก่อนใช้ฟีเจอร์นี้");
+        return;
+      }
+
+      // ✅ ใส่ VAPID key ที่คุณได้จาก Firebase Console
+      const vapidKey = "BHdBib1-EiXQF4xJMzultOUr1Z4fygyM7kBHh8fweyW58tiZ7jjhQ1n1qQci0BWQ0BCwvkSpqrNY7nvhyb4SAQk";
+      const token = await getToken(messaging, { vapidKey });
+
+      console.log("🎫 FCM Token:", token);
+
+      // บันทึก token ลง Firestore
+      const user = auth.currentUser;
+      if (user) {
+        await setDoc(doc(db, "users", user.uid), { fcmToken: token }, { merge: true });
+        console.log("🔐 บันทึก Token ลง Firestore แล้ว");
+      }
+    } catch (err) {
+      console.error("❌ Error getting FCM token:", err);
+    }
+  }
+
+  initFCM();
+
 
 }
 
