@@ -2,6 +2,8 @@ import { auth, signOut, db } from "../src/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, getDocs, query, where, Timestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { messaging, getToken } from "../firebase.js";
+import { onMessage } from "../firebase.js";
+
 
   
 document.addEventListener("DOMContentLoaded", () => {
@@ -92,12 +94,18 @@ async function showLocalNotification(title, body) {
 
 async function init() {
   // 🔧 สมัคร Service Worker สำหรับ Notification
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/sw.js").then(() => {
-      console.log("✅ Service Worker registered");
-    }).catch(err => {
-      console.error("❌ Failed to register Service Worker:", err);
-    });
+
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/firebase-messaging-sw.js")
+      .then((registration) => {
+        console.log("✅ FCM Service Worker registered:", registration);
+
+        // ต้องตั้งค่าให้ messaging ใช้ service worker ตัวนี้
+        messaging.useServiceWorker(registration);
+      })
+      .catch(err => {
+        console.error("❌ Failed to register Service Worker:", err);
+      });
   }
 
   renderAllMonths();
@@ -154,6 +162,12 @@ async function init() {
 
   initFCM();
 
+  
+  onMessage(messaging, (payload) => {
+    console.log("📩 Message received in foreground:", payload);
+    const { title, body } = payload.notification;
+    showLocalNotification(title, body);
+  });
 
 }
 
