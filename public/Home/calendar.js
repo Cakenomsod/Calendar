@@ -69,22 +69,61 @@ async function requestNotificationPermission() {
   }
 }
 
-// ========= ฟังก์ชันแสดงการแจ้งเตือน =========
-function showLocalNotification(title, body) {
-  if (Notification.permission === "granted") {
-    new Notification(title, {
-      body: body,
-      icon: "/icon.png", // ไฟล์ไอคอนถ้ามี
-      badge: "/icon.png"
+// 🔔 แสดงแจ้งเตือน (ผ่าน Service Worker)
+async function showLocalNotification(title, body) {
+  if (Notification.permission !== "granted") return;
+
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (reg) {
+    reg.showNotification(title, {
+      body,
+      icon: "/icon.png",
+      badge: "/icon.png",
+      vibrate: [100, 50, 100],
+      tag: title + Date.now()
     });
+  } else {
+    new Notification(title, { body });
   }
 }
 
 
 async function init() {
-  await requestNotificationPermission(); // ✅ ขอสิทธิ์แจ้งเตือน
+  // 🔧 สมัคร Service Worker สำหรับ Notification
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("/sw.js").then(() => {
+      console.log("✅ Service Worker registered");
+    }).catch(err => {
+      console.error("❌ Failed to register Service Worker:", err);
+    });
+  }
+
   renderAllMonths();
   setupEventListeners();
+  await requestNotificationPermission(); // ✅ ขอสิทธิ์แจ้งเตือน
+
+    // ตรวจสอบทุก 1 นาทีว่ามีกิจกรรมใกล้ถึงหรือไม่
+  setInterval(async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const now = new Date();
+    const next15 = new Date(now.getTime() + 15 * 60000);
+
+    const categoryRef = collection(db, "Users", user.uid, "Normal");
+    const q = query(categoryRef);
+    const snap = await getDocs(q);
+
+    snap.forEach(docSnap => {
+      const data = docSnap.data();
+      if (!data.day?.DayStart?.Date) return;
+      const start = data.day.DayStart.Date.toDate();
+      if (start > now && start < next15) {
+        showLocalNotification("🔔 กิจกรรมใกล้ถึง!", data.name);
+      }
+    });
+  }, 60000);
+
 }
 
 
@@ -787,22 +826,25 @@ document.getElementById("saveEventBtn").addEventListener("click", async () => {
   const allday = document.getElementById("allDayToggle").checked;
   const startDate = document.getElementById("startDate").value;
   const endDate = document.getElementById("endDate").value;
-  const startTime = document.getElementById("startTime").value;
-  const endTime = document.getElementById("endTime").value;
+  const startTime = document.getElementById("startTime").value || "09:00";
+  const endTime = document.getElementById("endTime").value || "17:00";
   const location = document.getElementById("locationText").value;
+  const categoryName = document.getElementById("categorySelect").value || "Normal";
 
-  let categoryName = document.getElementById("categorySelect").value;
-  if(!categoryName){
-    categoryName = "Normal";
-  }
-
-  // เก็บค่าการแจ้งเตือนที่ผู้ใช้ตั้งไว้
-  const beforeStartList = document.querySelectorAll("#beforeStartList .notification-item");
+  // 🔹 เก็บค่าการแจ้งเตือนก่อนเริ่ม
   const beforeStartArr = [];
-  beforeStartList.forEach(item => {
+  document.querySelectorAll("#beforeStartList .notification-item").forEach(item => {
     const value = parseInt(item.querySelector("input").value);
     const unit = item.querySelector("select").value;
     beforeStartArr.push({ value, unit });
+  });
+
+  // 🔹 เก็บค่าการแจ้งเตือนก่อนจบ
+  const beforeEndArr = [];
+  document.querySelectorAll("#beforeEndList .notification-item").forEach(item => {
+    const value = parseInt(item.querySelector("input").value);
+    const unit = item.querySelector("select").value;
+    beforeEndArr.push({ value, unit });
   });
 
   const activityData = {
@@ -813,54 +855,33 @@ document.getElementById("saveEventBtn").addEventListener("click", async () => {
       DayStart: { Date: new Date(startDate) },
       DayEnd: { Date: new Date(endDate) }
     },
-    time: allday
-      ? {}
-      : {
-          TimeStart: { Hour: +startTime.split(":")[0], Minute: +startTime.split(":")[1] },
-          TimeEnd: { Hour: +endTime.split(":")[0], Minute: +endTime.split(":")[1] }
-        },
-    notification: false,
-    loop: {},
-    createdAt: new Date(),
-    location,
-    notification: {
-      beforeStart: beforeStartArr
+    time: allday ? {} : {
+      TimeStart: { Hour: +startTime.split(":")[0], Minute: +startTime.split(":")[1] },
+      TimeEnd: { Hour: +endTime.split(":")[0], Minute: +endTime.split(":")[1] }
     },
+    notification: {
+      beforeStart: beforeStartArr,
+      beforeEnd: beforeEndArr
+    },
+    location,
+    createdAt: new Date()
+  };
 
-
-  }
   await saveActivityToFirestore(activityData, categoryName);
 
-  // หลังจากบันทึกกิจกรรมแล้ว
-  const eventStart = new Date(startDate + "T" + startTime);
-  const beforeMinutes = 10; // ตัวอย่าง: แจ้งเตือนก่อนเริ่ม 10 นาที
-  scheduleNotification(eventStart, beforeMinutes, name);
+  // 🕓 ตั้งการแจ้งเตือนตามที่ผู้ใช้เลือก
+  const start = new Date(startDate + "T" + startTime);
+  const end = new Date(endDate + "T" + endTime);
 
+  const toMinutes = { minutes: 1, hours: 60, days: 1440, weeks: 10080 };
   beforeStartArr.forEach(n => {
-    const multiplier = { minutes: 1, hours: 60, days: 1440 }[n.unit] || 1;
-    const beforeMinutes = n.value * multiplier;
-    scheduleNotification(new Date(startDate + "T" + startTime), beforeMinutes, name);
+    scheduleNotification(start, n.value * (toMinutes[n.unit] || 1), name, "เริ่ม");
   });
+  beforeEndArr.forEach(n => {
+    scheduleNotification(end, n.value * (toMinutes[n.unit] || 1), name, "จบ");
+  });
+});
 
-
-})
-
-// ========= ตั้งเวลาแจ้งเตือนล่วงหน้า =========
-function scheduleNotification(eventTime, beforeMinutes, eventName) {
-  const now = new Date();
-  const diffMs = eventTime - now - beforeMinutes * 60 * 1000;
-
-  if (diffMs <= 0) {
-    console.log("⏰ เวลานี้ผ่านมาแล้ว ไม่ตั้งแจ้งเตือน");
-    return;
-  }
-
-  console.log(`🔔 ตั้งแจ้งเตือน "${eventName}" ในอีก ${(diffMs / 60000).toFixed(1)} นาที`);
-
-  setTimeout(() => {
-    showLocalNotification("🔔 กิจกรรมใกล้ถึง!", `กิจกรรม "${eventName}" จะเริ่มในอีก ${beforeMinutes} นาที`);
-  }, diffMs);
-}
 
 
 
@@ -989,6 +1010,22 @@ function setupEventListeners() {
 }
 
 
+// 🕒 ตั้งเวลาแจ้งเตือนล่วงหน้า
+function scheduleNotification(eventTime, beforeMinutes, eventName, type = "เริ่ม") {
+  const now = new Date();
+  const diffMs = eventTime - now - beforeMinutes * 60 * 1000;
+
+  if (diffMs <= 0) return;
+
+  console.log(`🔔 ตั้งแจ้งเตือน "${eventName}" (${type}) ในอีก ${(diffMs / 60000).toFixed(1)} นาที`);
+
+  setTimeout(() => {
+    showLocalNotification(
+      `🔔 ${eventName}`,
+      `กิจกรรมจะ${type}ในอีก ${beforeMinutes} นาที`
+    );
+  }, diffMs);
+}
 
 
 // เริ่มทำงานหลัง DOM โหลดครบ
