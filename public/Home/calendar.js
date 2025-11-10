@@ -1,48 +1,48 @@
-// import { auth, signOut, db } from "../src/firebase.js";
-// import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-// import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, getDocs, query, where, Timestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { auth, signOut, db } from "../src/firebase.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, getDocs, query, where, Timestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 
   
-// document.addEventListener("DOMContentLoaded", () => {
-//   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
-//   onAuthStateChanged(auth, async (user) => {
-//     const userEmailElement = document.getElementById("userEmail");
-//     const userInfoDiv = document.querySelector(".user-info");
+document.addEventListener("DOMContentLoaded", () => {
+  // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
+  onAuthStateChanged(auth, async (user) => {
+    const userEmailElement = document.getElementById("userEmail");
+    const userInfoDiv = document.querySelector(".user-info");
 
-//     if (user) {
-//       console.log("✅ ผู้ใช้ล็อกอินอยู่:", user.email);
+    if (user) {
+      console.log("✅ ผู้ใช้ล็อกอินอยู่:", user.email);
 
-//       // แสดงอีเมล
-//       userEmailElement.textContent = `Email: ${user.email}`;
+      // แสดงอีเมล
+      userEmailElement.textContent = `Email: ${user.email}`;
 
-//       // แสดงรูปโปรไฟล์ (ถ้ามี)
-//       if (user.photoURL && userInfoDiv) {
-//         userInfoDiv.style.setProperty("--user-photo", `url('${user.photoURL}')`);
-//         userInfoDiv.classList.add("has-photo");
-//       }
+      // แสดงรูปโปรไฟล์ (ถ้ามี)
+      if (user.photoURL && userInfoDiv) {
+        userInfoDiv.style.setProperty("--user-photo", `url('${user.photoURL}')`);
+        userInfoDiv.classList.add("has-photo");
+      }
 
-//     } else {
-//       console.log("❌ ยังไม่ได้เข้าสู่ระบบ → กลับไปหน้า login");
-//       window.location.href = "../Login/index.html"; 
-//     }
-//   });
-// });
+    } else {
+      console.log("❌ ยังไม่ได้เข้าสู่ระบบ → กลับไปหน้า login");
+      window.location.href = "../Login/index.html"; 
+    }
+  });
+});
 
-// // ปุ่มออกจากระบบ
-// const logoutBtn = document.getElementById("logoutBtn");
-// if (logoutBtn) {
-//   logoutBtn.addEventListener("click", async () => {
-//     try {
-//       await signOut(auth);
-//       localStorage.removeItem("loggedInUser");
-//       alert("ออกจากระบบเรียบร้อย");
-//       window.location.href = "../Login/index.html";
-//     } catch (error) {
-//       console.error("ออกจากระบบไม่สำเร็จ:", error);
-//     }
-//   });
-// }
+// ปุ่มออกจากระบบ
+const logoutBtn = document.getElementById("logoutBtn");
+if (logoutBtn) {
+  logoutBtn.addEventListener("click", async () => {
+    try {
+      await signOut(auth);
+      localStorage.removeItem("loggedInUser");
+      alert("ออกจากระบบเรียบร้อย");
+      window.location.href = "../Login/index.html";
+    } catch (error) {
+      console.error("ออกจากระบบไม่สำเร็จ:", error);
+    }
+  });
+}
 
 
 const thaiMonths = [
