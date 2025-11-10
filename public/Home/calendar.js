@@ -1,6 +1,6 @@
 import { auth, signOut, db, messaging, getToken, onMessage } from "../src/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, getDocs, query, where, Timestamp, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, getDocs, query, where, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 
 // ========== ระบบแจ้งเตือน FCM ==========
