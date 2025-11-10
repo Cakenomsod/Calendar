@@ -147,9 +147,69 @@ async function init() {
 
   renderAllMonths();
   setupEventListeners();
+  
+  // ✅ ติดตั้งฟังก์ชัน debug
+  setupDebugFunctions();
 
 }
 
+
+// ✅ ฟังก์ชัน Debug - ติดตั้งใน window
+function setupDebugFunctions() {
+  window.debugNotifications = async function() {
+    const user = auth.currentUser;
+    if (!user) {
+      console.log('❌ ยังไม่ได้ login');
+      return;
+    }
+    
+    console.log('📊 Debug: ตรวจสอบ Notifications ใน Firestore');
+    
+    const notifCollection = collection(db, "Users", user.uid, "Notifications");
+    const snapshot = await getDocs(notifCollection);
+    
+    console.log(`📬 พบทั้งหมด: ${snapshot.size} รายการ`);
+    
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      console.log({
+        id: doc.id,
+        activity: data.activityName,
+        message: data.message,
+        scheduledTime: data.scheduledTime.toDate().toLocaleString('th-TH'),
+        sent: data.sent,
+        type: data.type
+      });
+    });
+    
+    console.log('✅ สถานะ Notification Permission:', Notification.permission);
+    console.log('✅ FCM Token:', fcmToken);
+  };
+
+  window.testNotification = function() {
+    if (Notification.permission === 'granted') {
+      new Notification('🧪 ทดสอบการแจ้งเตือน', {
+        body: 'ถ้าเห็นข้อความนี้ แสดงว่าระบบแจ้งเตือนทำงานได้!',
+        icon: '/icon-192x192.png',
+        requireInteraction: true
+      });
+      console.log('✅ ส่งการแจ้งเตือนทดสอบแล้ว');
+    } else {
+      console.error('❌ ไม่ได้รับอนุญาตแจ้งเตือน');
+      alert('กรุณาอนุญาตการแจ้งเตือนก่อน');
+    }
+  };
+  
+  window.forceCheckNotifications = function() {
+    console.log('🔄 บังคับตรวจสอบการแจ้งเตือนทันที...');
+    checkPendingNotifications();
+  };
+
+  console.log('💡 ฟังก์ชัน Debug พร้อมใช้งาน:');
+  console.log('   testNotification() - ทดสอบส่งการแจ้งเตือน');
+  console.log('   debugNotifications() - ดูรายการแจ้งเตือนทั้งหมด');
+  console.log('   forceCheckNotifications() - บังคับตรวจสอบทันที');
+}
 
 
 // ================== SETTINGS PANEL CONTROL ==================
@@ -746,15 +806,22 @@ repeatForever.addEventListener('change', () => {
 // โหลดหมวดหมู่ทั้งหมดของผู้ใช้
 async function loadCategories() {
   const user = auth.currentUser;
+  if (!user) {
+    console.error("❌ ยังไม่ได้ login");
+    return;
+  }
+  
   try {
     const userRef = doc(db, "Users", user.uid);
     const userSnap = await getDoc(userRef);
 
+    const select = document.getElementById("categorySelect");
+    const currentValue = select.value; // ✅ เก็บค่าที่เลือกไว้
+    
     if (userSnap.exists()) {
       const data = userSnap.data();
-      const categories = data.categories || []; // ดึง array หมวดหมู่
+      const categories = data.categories || ["Normal"]; // ✅ default เป็น Normal
 
-      const select = document.getElementById("categorySelect");
       select.innerHTML = '<option value="">-- เลือกหมวดหมู่ --</option>';
 
       categories.forEach(cat => {
@@ -764,9 +831,23 @@ async function loadCategories() {
         select.appendChild(opt);
       });
 
+      // ✅ คืนค่าที่เลือกกลับมา
+      if (currentValue && categories.includes(currentValue)) {
+        select.value = currentValue;
+      } else {
+        select.value = "Normal"; // ตั้งค่า default
+      }
+
       console.log("✅ โหลดหมวดหมู่สำเร็จ:", categories);
     } else {
-      console.log("⚠️ ไม่พบข้อมูลผู้ใช้ใน Firestore");
+      // ✅ ถ้ายังไม่มี document ให้สร้าง
+      await setDoc(userRef, {
+        categories: ["Normal"],
+        createdAt: Timestamp.now()
+      }, { merge: true });
+      
+      select.innerHTML = '<option value="">-- เลือกหมวดหมู่ --</option><option value="Normal" selected>Normal</option>';
+      console.log("✅ สร้างหมวดหมู่เริ่มต้น: Normal");
     }
   } catch (err) {
     console.error("❌ โหลดหมวดหมู่ล้มเหลว:", err);
@@ -962,8 +1043,16 @@ function setupEventListeners() {
     document.getElementById("newCategoryName").value = "";
   });
 
-  document.getElementById("categorySelect").addEventListener("click", loadCategories);
+// ✅ แก้ไข: ใช้ focus แทน click เพื่อโหลดหมวดหมู่
+  const categorySelect = document.getElementById("categorySelect");
+  let categoriesLoaded = false;
 
+  categorySelect.addEventListener("focus", async () => {
+    if (!categoriesLoaded) {
+      await loadCategories();
+      categoriesLoaded = true;
+    }
+  });
 
 
   function closeAddDetailActivityModal() {
