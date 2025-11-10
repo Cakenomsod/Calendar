@@ -938,6 +938,49 @@ function setupEventListeners() {
 }
 
 
+// --- ปุ่มบันทึกการแจ้งเตือน ---
+const saveNotificationBtn = document.getElementById("saveNotificationSettings");
+if (saveNotificationBtn) {
+  saveNotificationBtn.addEventListener("click", saveNotificationSettings);
+}
+
+async function saveNotificationSettings() {
+  try {
+    // เก็บค่าการแจ้งเตือนก่อนเริ่ม
+    const beforeStartArr = [];
+    document.querySelectorAll("#beforeStartList .notification-item").forEach(item => {
+      const value = parseInt(item.querySelector("input").value);
+      const unit = item.querySelector("select").value;
+      beforeStartArr.push({ value, unit });
+    });
+
+    // เก็บค่าการแจ้งเตือนก่อนจบ
+    const beforeEndArr = [];
+    document.querySelectorAll("#beforeEndList .notification-item").forEach(item => {
+      const value = parseInt(item.querySelector("input").value);
+      const unit = item.querySelector("select").value;
+      beforeEndArr.push({ value, unit });
+    });
+
+    console.log("✅ บันทึกการแจ้งเตือนสำเร็จ:", {
+      beforeStart: beforeStartArr,
+      beforeEnd: beforeEndArr
+    });
+
+    // ปิด modal หลังบันทึก
+    document.getElementById("NotificationModal").classList.remove("active");
+
+    // ถ้านายอยากเชื่อมค่าพวกนี้เข้ากับกิจกรรมที่กำลังสร้าง
+    // ให้เก็บไว้ในตัวแปร global เช่น currentNotificationSettings
+    window.currentNotificationSettings = {
+      beforeStart: beforeStartArr,
+      beforeEnd: beforeEndArr
+    };
+
+  } catch (err) {
+    console.error("❌ เกิดข้อผิดพลาดตอนบันทึกการแจ้งเตือน:", err);
+  }
+}
 
 
 // เริ่มทำงานหลัง DOM โหลดครบ
