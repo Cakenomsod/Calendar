@@ -199,6 +199,10 @@ function setupDebugFunctions() {
       alert('กรุณาอนุญาตการแจ้งเตือนก่อน');
     }
   };
+
+  document.getElementById('Magnifyinglass-icon').addEventListener('click', () => {
+    testNotification();
+  });
   
 
 
