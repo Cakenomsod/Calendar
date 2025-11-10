@@ -669,7 +669,24 @@ function openAddDetailModal(dateObj = null) {
 }
 
 
-
+// ฟังก์ชันสร้าง notification item
+function createNotificationItem(listContainer) {
+  const div = document.createElement('div');
+  div.className = 'notification-item';
+  div.innerHTML = `
+    <input type="number" min="0" value="1">
+    <select>
+      <option value="minutes">นาที</option>
+      <option value="hours">ชั่วโมง</option>
+      <option value="days">วัน</option>
+      <option value="weeks">อาทิตย์</option>
+      <option value="months">เดือน</option>
+    </select>
+    <button class="remove-btn">❌</button>
+  `;
+  div.querySelector('.remove-btn').addEventListener('click', () => div.remove());
+  listContainer.appendChild(div);
+}
 
 
 // ก่อนเริ่มกิจกรรม
