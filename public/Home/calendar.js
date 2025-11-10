@@ -1,6 +1,84 @@
-import { auth, signOut, db } from "../src/firebase.js";
+import { auth, signOut, db, messaging, getToken, onMessage } from "../src/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, getDocs, query, where, Timestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+
+// ========== ระบบแจ้งเตือน FCM ==========
+let fcmToken = null;
+
+async function requestNotificationPermission() {
+  try {
+    const permission = await Notification.requestPermission();
+    
+    if (permission === 'granted') {
+      console.log('✅ ได้รับอนุญาตแจ้งเตือนแล้ว');
+      
+      // ลงทะเบียน Service Worker
+      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      console.log('✅ Service Worker ลงทะเบียนสำเร็จ');
+      
+      // ขอ FCM token
+      fcmToken = await getToken(messaging, {
+        vapidKey: 'BHdBib1-EiXQF4xJMzultOUr1Z4fygyM7kBHh8fweyW58tiZ7jjhQ1n1qQci0BWQ0BCwvkSpqrNY7nvhyb4SAQk',
+        serviceWorkerRegistration: registration
+      });
+      
+      console.log('✅ FCM Token:', fcmToken);
+      
+      // บันทึก token ลง Firestore
+      if (auth.currentUser) {
+        await saveFCMToken(fcmToken);
+      }
+      
+      return fcmToken;
+    } else {
+      console.warn('⚠️ ผู้ใช้ปฏิเสธการแจ้งเตือน');
+      alert('กรุณาเปิดการแจ้งเตือนเพื่อรับข่าวสารกิจกรรม');
+      return null;
+    }
+  } catch (error) {
+    console.error('❌ ขออนุญาตแจ้งเตือนล้มเหลว:', error);
+    return null;
+  }
+}
+
+async function saveFCMToken(token) {
+  if (!auth.currentUser) return;
+  
+  try {
+    const userRef = doc(db, "Users", auth.currentUser.uid);
+    await updateDoc(userRef, {
+      fcmTokens: arrayUnion(token),
+      lastUpdated: Timestamp.now()
+    }).catch(async () => {
+      // ถ้ายังไม่มี document ให้สร้างใหม่
+      await setDoc(userRef, {
+        fcmTokens: [token],
+        categories: ["Normal"],
+        lastUpdated: Timestamp.now()
+      }, { merge: true });
+    });
+    console.log('✅ บันทึก FCM Token ลง Firestore สำเร็จ');
+  } catch (err) {
+    console.error('❌ บันทึก FCM Token ล้มเหลว:', err);
+  }
+}
+
+// รับ notification เมื่ออยู่หน้าเว็บ
+onMessage(messaging, (payload) => {
+  console.log('📬 รับ notification:', payload);
+  
+  const title = payload.notification?.title || 'การแจ้งเตือนกิจกรรม';
+  const options = {
+    body: payload.notification?.body || 'คุณมีกิจกรรมใหม่',
+    icon: '/icon-192x192.png',
+    badge: '/badge-72x72.png',
+    tag: payload.data?.activityId,
+    requireInteraction: true
+  };
+  
+  new Notification(title, options);
+});
 
 
   
@@ -21,6 +99,9 @@ document.addEventListener("DOMContentLoaded", () => {
         userInfoDiv.style.setProperty("--user-photo", `url('${user.photoURL}')`);
         userInfoDiv.classList.add("has-photo");
       }
+
+      // ขออนุญาตแจ้งเตือน
+      await requestNotificationPermission();
 
     } else {
       console.log("❌ ยังไม่ได้เข้าสู่ระบบ → กลับไปหน้า login");
@@ -53,6 +134,11 @@ const thaiMonths = [
 let currentDate = new Date();
 let modalDate = null;
 
+// ✅ ตัวแปรเก็บข้อมูลการแจ้งเตือนชั่วคราว
+let tempNotificationSettings = {
+  beforeStart: [],
+  beforeEnd: []
+};
 
 
 
@@ -106,6 +192,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+
 
 
 
@@ -226,7 +313,6 @@ function selectMonthFromModal(monthIndex) {
   renderAllMonths();
 }
 
-
 // ------------------- Modal ปี -------------------
 let yearModalBase = null;
 
@@ -339,6 +425,7 @@ function modalPrevDay() {
   modalDate.setDate(modalDate.getDate() - 1);
   updateModalDate();
 }
+
 
 
 
@@ -511,6 +598,7 @@ async function loadActivitiesByDate(keyDate) {
 
 
 
+
   // ------------------- เพิ่มกิจกรรม -------------------
   document.getElementById('addActivityBtn').addEventListener('click', addActivity);
   document.getElementById('activityInput').addEventListener('keypress', (e) => {
@@ -557,6 +645,13 @@ const cancelEventBtn = document.getElementById('cancelEventBtn');
 function openAddDetailModal(dateObj = null) {
   addDetailModal.classList.add('active');
   document.body.style.overflow = 'hidden';
+  
+  // ✅ ล้าง notification settings เดิม
+  tempNotificationSettings = {
+    beforeStart: [],
+    beforeEnd: []
+  };
+  
   if (dateObj) {
     const adjustedDate = new Date(dateObj);
     adjustedDate.setDate(adjustedDate.getDate() + 1);
@@ -565,8 +660,8 @@ function openAddDetailModal(dateObj = null) {
     document.getElementById('startDate').value = isoDate;
     document.getElementById('endDate').value = isoDate;
 
-    document.getElementById('startTime').value = '09:00';
-    document.getElementById('endTime').value = '10:00';
+    // ✅ ตั้งเวลาเริ่มเป็นชั่วโมงถัดไปที่จะมาถึง
+    autoSetStartTime();
   }
 }
 
@@ -936,6 +1031,86 @@ function setupEventListeners() {
     else if (swipe < -80) nextMonth();
   });
 }
+
+
+
+
+
+
+
+
+
+// ✅ ฟังก์ชันตั้งเวลาเริ่มอัตโนมัติ
+function autoSetStartTime() {
+  const now = new Date();
+  const startDateInput = document.getElementById('startDate');
+  const startTimeInput = document.getElementById('startTime');
+  const endTimeInput = document.getElementById('endTime');
+  
+  const selectedDate = new Date(startDateInput.value);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  selectedDate.setHours(0, 0, 0, 0);
+  
+  // ถ้าเลือกวันนี้
+  if (selectedDate.getTime() === today.getTime()) {
+    const nextHour = now.getHours() + 1;
+    const startTime = `${String(nextHour).padStart(2, '0')}:00`;
+    const endTime = `${String(nextHour + 1).padStart(2, '0')}:00`;
+    
+    startTimeInput.value = startTime;
+    endTimeInput.value = endTime;
+  } else {
+    // ถ้าเป็นวันอื่น ใช้ค่าเริ่มต้น
+    startTimeInput.value = '09:00';
+    endTimeInput.value = '10:00';
+  }
+}
+
+// ✅ เมื่อเปลี่ยนเวลาเริ่ม ให้ปรับเวลาจบให้มากกว่า 1 ชม.
+document.getElementById('startTime')?.addEventListener('change', () => {
+  const startTime = document.getElementById('startTime').value;
+  const endTimeInput = document.getElementById('endTime');
+  
+  if (!startTime) return;
+  
+  const [startHour, startMin] = startTime.split(':').map(Number);
+  let endHour = startHour + 1;
+  
+  if (endHour >= 24) endHour = 23;
+  
+  const endTime = `${String(endHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
+  endTimeInput.value = endTime;
+});
+
+// ✅ ตรวจสอบเวลาจบต้องมากกว่าเวลาเริ่ม
+document.getElementById('endTime')?.addEventListener('change', () => {
+  const startTime = document.getElementById('startTime').value;
+  const endTime = document.getElementById('endTime').value;
+  
+  if (!startTime || !endTime) return;
+  
+  const [startHour, startMin] = startTime.split(':').map(Number);
+  const [endHour, endMin] = endTime.split(':').map(Number);
+  
+  const startMinutes = startHour * 60 + startMin;
+  const endMinutes = endHour * 60 + endMin;
+  
+  if (endMinutes <= startMinutes) {
+    // ถ้าเวลาจบน้อยกว่าหรือเท่ากับเวลาเริ่ม ให้เพิ่ม 1 ชม.
+    const newEndHour = startHour + 1;
+    document.getElementById('endTime').value = `${String(newEndHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}`;
+    alert('⚠️ เวลาสิ้นสุดต้องมากกว่าเวลาเริ่ม (ปรับให้อัตโนมัติแล้ว)');
+  }
+});
+
+
+
+
+
+
+
+
 
 
 
