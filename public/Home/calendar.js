@@ -1,6 +1,6 @@
 import { auth, signOut, db, messaging, getToken, onMessage } from "../src/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, getDocs, query, where, Timestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, getDocs, query, where, Timestamp, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 
 // ========== ระบบแจ้งเตือน FCM ==========
@@ -200,15 +200,11 @@ function setupDebugFunctions() {
     }
   };
   
-  window.forceCheckNotifications = function() {
-    console.log('🔄 บังคับตรวจสอบการแจ้งเตือนทันที...');
-    checkPendingNotifications();
-  };
+
 
   console.log('💡 ฟังก์ชัน Debug พร้อมใช้งาน:');
   console.log('   testNotification() - ทดสอบส่งการแจ้งเตือน');
   console.log('   debugNotifications() - ดูรายการแจ้งเตือนทั้งหมด');
-  console.log('   forceCheckNotifications() - บังคับตรวจสอบทันที');
 }
 
 
@@ -992,21 +988,82 @@ document.getElementById("saveEventBtn").addEventListener("click", async () => {
 
 async function saveActivityToFirestore(activityData, categoryName) {
   const user = auth.currentUser;
+  if (!user) return;
 
   try {
     const categoryRef = collection(db, "Users", user.uid, categoryName);
-    await addDoc(categoryRef, activityData);
+    const docRef = await addDoc(categoryRef, activityData);
+    console.log("✅ บันทึกกิจกรรมสำเร็จ:", docRef.id);
 
-    console.log("✅ บันทึกกิจกรรมสำเร็จในหมวด:", categoryName);
+    // === ✅ เพิ่มตรงนี้: สร้างแจ้งเตือนล่วงหน้า ===
+    const notifCollection = collection(db, "Users", user.uid, "Notifications");
 
-    addDetailModal.classList.remove('active');
-    document.body.style.overflow = '';
+    const startTime = new Date(activityData.day.DayStart.Date);
+    const endTime = new Date(activityData.day.DayEnd.Date);
+
+    // ถ้ามีเวลาระบุไว้ (ไม่ใช่ all-day)
+    if (!activityData.allday && activityData.time?.TimeStart) {
+      startTime.setHours(activityData.time.TimeStart.Hour);
+      startTime.setMinutes(activityData.time.TimeStart.Minute);
+    }
+
+    if (!activityData.allday && activityData.time?.TimeEnd) {
+      endTime.setHours(activityData.time.TimeEnd.Hour);
+      endTime.setMinutes(activityData.time.TimeEnd.Minute);
+    }
+
+    const notifications = [];
+
+    // 🔹 ก่อนเริ่มกิจกรรม
+    for (const item of activityData.notification.beforeStart) {
+      const scheduledTime = calculateNotifyTime(startTime, item.value, item.unit);
+      notifications.push({
+        activityId: docRef.id,
+        activityName: activityData.name,
+        message: `กิจกรรม "${activityData.name}" กำลังจะเริ่มในอีก ${item.value} ${item.unit}`,
+        scheduledTime: Timestamp.fromDate(scheduledTime),
+        type: "beforeStart",
+        sent: false,
+      });
+    }
+
+    // 🔹 ก่อนจบกิจกรรม
+    for (const item of activityData.notification.beforeEnd) {
+      const scheduledTime = calculateNotifyTime(endTime, item.value, item.unit);
+      notifications.push({
+        activityId: docRef.id,
+        activityName: activityData.name,
+        message: `กิจกรรม "${activityData.name}" กำลังจะสิ้นสุดในอีก ${item.value} ${item.unit}`,
+        scheduledTime: Timestamp.fromDate(scheduledTime),
+        type: "beforeEnd",
+        sent: false,
+      });
+    }
+
+    // บันทึกแจ้งเตือนทั้งหมด
+    for (const n of notifications) {
+      await addDoc(notifCollection, n);
+    }
+
+    console.log(`🔔 สร้างแจ้งเตือน ${notifications.length} รายการใน Firestore แล้ว`);
+
+    addDetailModal.classList.remove("active");
+    document.body.style.overflow = "";
     showActivityModal(selectedDate);
+
   } catch (err) {
     console.error("🔥 เกิดข้อผิดพลาดในการบันทึกกิจกรรม:", err);
   }
+}
 
-
+function calculateNotifyTime(baseTime, value, unit) {
+  const time = new Date(baseTime);
+  switch (unit) {
+    case "นาที": time.setMinutes(time.getMinutes() - value); break;
+    case "ชั่วโมง": time.setHours(time.getHours() - value); break;
+    case "วัน": time.setDate(time.getDate() - value); break;
+  }
+  return time;
 }
 
 
