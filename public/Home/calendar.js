@@ -3,7 +3,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/fi
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, getDocs, query, where, Timestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 
-
 // ========== ระบบแจ้งเตือน FCM ==========
 let fcmToken = null;
 
@@ -152,6 +151,7 @@ async function init() {
 }
 
 
+
 // ================== SETTINGS PANEL CONTROL ==================
 document.addEventListener("DOMContentLoaded", () => {
   const settingIcon = document.querySelector(".setting-icon");
@@ -193,7 +193,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
-
 
 
 
@@ -267,6 +266,8 @@ function handleModalScroll(e) {
   });
 }
 
+
+
 // ------------------- เลื่อนเดือน -------------------
 function nextMonth() {
   const wrapper = document.getElementById('calendarContentWrapper');
@@ -313,6 +314,7 @@ function selectMonthFromModal(monthIndex) {
   document.getElementById('monthModal').classList.remove('active');
   renderAllMonths();
 }
+
 
 // ------------------- Modal ปี -------------------
 let yearModalBase = null;
@@ -389,6 +391,7 @@ function selectYearFromModal(year) {
   renderAllMonths();
   closeYearModal();
 }
+
 
 
 
@@ -600,7 +603,7 @@ async function loadActivitiesByDate(keyDate) {
 
 
 
-  // ------------------- เพิ่มกิจกรรม -------------------
+ // ------------------- เพิ่มกิจกรรม -------------------
   document.getElementById('addActivityBtn').addEventListener('click', addActivity);
   document.getElementById('activityInput').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') addActivity();
@@ -636,7 +639,6 @@ if (allDayToggle && timeInputsRow) {
 
 
 
-
 // ------------------- MODAL เพิ่มกิจกรรมละเอียด -------------------
 const addDetailModal = document.getElementById('addDetailActivityModal');
 const closeAddDetailModal = document.getElementById('closeAddDetailModal');
@@ -667,25 +669,6 @@ function openAddDetailModal(dateObj = null) {
 }
 
 
-
-// ฟังก์ชันสร้าง notification item
-function createNotificationItem(listContainer) {
-  const div = document.createElement('div');
-  div.className = 'notification-item';
-  div.innerHTML = `
-    <input type="number" min="0" value="1">
-    <select>
-      <option value="minutes">นาที</option>
-      <option value="hours">ชั่วโมง</option>
-      <option value="days">วัน</option>
-      <option value="weeks">อาทิตย์</option>
-      <option value="months">เดือน</option>
-    </select>
-    <button class="remove-btn">❌</button>
-  `;
-  div.querySelector('.remove-btn').addEventListener('click', () => div.remove());
-  listContainer.appendChild(div);
-}
 
 
 
@@ -1067,6 +1050,7 @@ function autoSetStartTime() {
     endTimeInput.value = '10:00';
   }
 }
+
 
 // ✅ เมื่อเปลี่ยนเวลาเริ่ม ให้ปรับเวลาจบให้มากกว่า 1 ชม.
 document.getElementById('startTime')?.addEventListener('change', () => {
