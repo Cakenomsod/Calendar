@@ -1,50 +1,48 @@
-import { auth, signOut, db } from "../src/firebase.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, getDocs, query, where, Timestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { messaging, getToken } from "../firebase.js";
-import { onMessage } from "../firebase.js";
+// import { auth, signOut, db } from "../src/firebase.js";
+// import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+// import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, getDocs, query, where, Timestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 
   
-document.addEventListener("DOMContentLoaded", () => {
-  // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
-  onAuthStateChanged(auth, async (user) => {
-    const userEmailElement = document.getElementById("userEmail");
-    const userInfoDiv = document.querySelector(".user-info");
+// document.addEventListener("DOMContentLoaded", () => {
+//   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
+//   onAuthStateChanged(auth, async (user) => {
+//     const userEmailElement = document.getElementById("userEmail");
+//     const userInfoDiv = document.querySelector(".user-info");
 
-    if (user) {
-      console.log("✅ ผู้ใช้ล็อกอินอยู่:", user.email);
+//     if (user) {
+//       console.log("✅ ผู้ใช้ล็อกอินอยู่:", user.email);
 
-      // แสดงอีเมล
-      userEmailElement.textContent = `Email: ${user.email}`;
+//       // แสดงอีเมล
+//       userEmailElement.textContent = `Email: ${user.email}`;
 
-      // แสดงรูปโปรไฟล์ (ถ้ามี)
-      if (user.photoURL && userInfoDiv) {
-        userInfoDiv.style.setProperty("--user-photo", `url('${user.photoURL}')`);
-        userInfoDiv.classList.add("has-photo");
-      }
+//       // แสดงรูปโปรไฟล์ (ถ้ามี)
+//       if (user.photoURL && userInfoDiv) {
+//         userInfoDiv.style.setProperty("--user-photo", `url('${user.photoURL}')`);
+//         userInfoDiv.classList.add("has-photo");
+//       }
 
-    } else {
-      console.log("❌ ยังไม่ได้เข้าสู่ระบบ → กลับไปหน้า login");
-      window.location.href = "../Login/index.html"; 
-    }
-  });
-});
+//     } else {
+//       console.log("❌ ยังไม่ได้เข้าสู่ระบบ → กลับไปหน้า login");
+//       window.location.href = "../Login/index.html"; 
+//     }
+//   });
+// });
 
-// ปุ่มออกจากระบบ
-const logoutBtn = document.getElementById("logoutBtn");
-if (logoutBtn) {
-  logoutBtn.addEventListener("click", async () => {
-    try {
-      await signOut(auth);
-      localStorage.removeItem("loggedInUser");
-      alert("ออกจากระบบเรียบร้อย");
-      window.location.href = "../Login/index.html";
-    } catch (error) {
-      console.error("ออกจากระบบไม่สำเร็จ:", error);
-    }
-  });
-}
+// // ปุ่มออกจากระบบ
+// const logoutBtn = document.getElementById("logoutBtn");
+// if (logoutBtn) {
+//   logoutBtn.addEventListener("click", async () => {
+//     try {
+//       await signOut(auth);
+//       localStorage.removeItem("loggedInUser");
+//       alert("ออกจากระบบเรียบร้อย");
+//       window.location.href = "../Login/index.html";
+//     } catch (error) {
+//       console.error("ออกจากระบบไม่สำเร็จ:", error);
+//     }
+//   });
+// }
 
 
 const thaiMonths = [
@@ -55,119 +53,14 @@ const thaiMonths = [
 let currentDate = new Date();
 let modalDate = null;
 
-// ========= ฟังก์ชันขอสิทธิ์แจ้งเตือนจากผู้ใช้ =========
-async function requestNotificationPermission() {
-  if (!("Notification" in window)) {
-    alert("เบราว์เซอร์นี้ไม่รองรับการแจ้งเตือน");
-    return false;
-  }
 
-  const permission = await Notification.requestPermission();
-  if (permission === "granted") {
-    console.log("✅ ได้รับอนุญาตให้แจ้งเตือน");
-    return true;
-  } else {
-    console.log("❌ ผู้ใช้ไม่อนุญาตการแจ้งเตือน");
-    alert("กรุณาอนุญาตให้เว็บไซต์แจ้งเตือนเพื่อใช้งานฟีเจอร์นี้");
-    return false;
-  }
-}
 
-// 🔔 แสดงแจ้งเตือน (ผ่าน Service Worker)
-async function showLocalNotification(title, body) {
-  if (Notification.permission !== "granted") return;
-
-  const reg = await navigator.serviceWorker.getRegistration();
-  if (reg) {
-    reg.showNotification(title, {
-      body,
-      icon: "/icon.png",
-      badge: "/icon.png",
-      vibrate: [100, 50, 100],
-      tag: title + Date.now()
-    });
-  } else {
-    new Notification(title, { body });
-  }
-}
 
 
 async function init() {
-  // 🔧 สมัคร Service Worker สำหรับ Notification
-
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("/firebase-messaging-sw.js")
-      .then((registration) => {
-        console.log("✅ FCM Service Worker registered:", registration);
-
-        // ต้องตั้งค่าให้ messaging ใช้ service worker ตัวนี้
-        messaging.useServiceWorker(registration);
-      })
-      .catch(err => {
-        console.error("❌ Failed to register Service Worker:", err);
-      });
-  }
 
   renderAllMonths();
   setupEventListeners();
-  await requestNotificationPermission(); // ✅ ขอสิทธิ์แจ้งเตือน
-
-    // ตรวจสอบทุก 1 นาทีว่ามีกิจกรรมใกล้ถึงหรือไม่
-  setInterval(async () => {
-    const user = auth.currentUser;
-    if (!user) return;
-
-    const now = new Date();
-    const next15 = new Date(now.getTime() + 15 * 60000);
-
-    const categoryRef = collection(db, "Users", user.uid, "Normal");
-    const q = query(categoryRef);
-    const snap = await getDocs(q);
-
-    snap.forEach(docSnap => {
-      const data = docSnap.data();
-      if (!data.day?.DayStart?.Date) return;
-      const start = data.day.DayStart.Date.toDate();
-      if (start > now && start < next15) {
-        showLocalNotification("🔔 กิจกรรมใกล้ถึง!", data.name);
-      }
-    });
-  }, 60000);
-
-
-  async function initFCM() {
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        alert("กรุณาอนุญาตให้แจ้งเตือนก่อนใช้ฟีเจอร์นี้");
-        return;
-      }
-
-      // ✅ ใส่ VAPID key ที่คุณได้จาก Firebase Console
-      const vapidKey = "BHdBib1-EiXQF4xJMzultOUr1Z4fygyM7kBHh8fweyW58tiZ7jjhQ1n1qQci0BWQ0BCwvkSpqrNY7nvhyb4SAQk";
-      const token = await getToken(messaging, { vapidKey });
-
-      console.log("🎫 FCM Token:", token);
-
-      // บันทึก token ลง Firestore
-      const user = auth.currentUser;
-      if (user) {
-        await setDoc(doc(db, "users", user.uid), { fcmToken: token }, { merge: true });
-        console.log("🔐 บันทึก Token ลง Firestore แล้ว");
-      }
-    } catch (err) {
-      console.error("❌ Error getting FCM token:", err);
-    }
-  }
-
-  initFCM();
-
-  
-  onMessage(messaging, (payload) => {
-    console.log("📩 Message received in foreground:", payload);
-    const { title, body } = payload.notification;
-    showLocalNotification(title, body);
-  });
 
 }
 
@@ -914,17 +807,7 @@ document.getElementById("saveEventBtn").addEventListener("click", async () => {
 
   await saveActivityToFirestore(activityData, categoryName);
 
-  // 🕓 ตั้งการแจ้งเตือนตามที่ผู้ใช้เลือก
-  const start = new Date(startDate + "T" + startTime);
-  const end = new Date(endDate + "T" + endTime);
 
-  const toMinutes = { minutes: 1, hours: 60, days: 1440, weeks: 10080 };
-  beforeStartArr.forEach(n => {
-    scheduleNotification(start, n.value * (toMinutes[n.unit] || 1), name, "เริ่ม");
-  });
-  beforeEndArr.forEach(n => {
-    scheduleNotification(end, n.value * (toMinutes[n.unit] || 1), name, "จบ");
-  });
 });
 
 
@@ -1055,22 +938,6 @@ function setupEventListeners() {
 }
 
 
-// 🕒 ตั้งเวลาแจ้งเตือนล่วงหน้า
-function scheduleNotification(eventTime, beforeMinutes, eventName, type = "เริ่ม") {
-  const now = new Date();
-  const diffMs = eventTime - now - beforeMinutes * 60 * 1000;
-
-  if (diffMs <= 0) return;
-
-  console.log(`🔔 ตั้งแจ้งเตือน "${eventName}" (${type}) ในอีก ${(diffMs / 60000).toFixed(1)} นาที`);
-
-  setTimeout(() => {
-    showLocalNotification(
-      `🔔 ${eventName}`,
-      `กิจกรรมจะ${type}ในอีก ${beforeMinutes} นาที`
-    );
-  }, diffMs);
-}
 
 
 // เริ่มทำงานหลัง DOM โหลดครบ

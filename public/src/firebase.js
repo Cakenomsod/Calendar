@@ -18,10 +18,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
-
-export { app, db, auth, provider, signInWithPopup, signOut };
-
-
 const messaging = getMessaging(app);
 
-export { messaging, getToken, onMessage };
+export { app, db, auth, provider, signInWithPopup, signOut, messaging, getToken, onMessage };
