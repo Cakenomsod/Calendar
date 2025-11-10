@@ -1,7 +1,9 @@
-import { auth, signOut, db, messaging, getToken, onMessage } from "../src/firebase.js";
+import { auth, signOut, db } from "../src/firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
-import { doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { doc, getDoc, setDoc, updateDoc, arrayUnion, collection, addDoc, getDocs, query, where, Timestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
+
+  
 document.addEventListener("DOMContentLoaded", () => {
   // ตรวจสอบสถานะการเข้าสู่ระบบทุกครั้งที่หน้าโหลด
   onAuthStateChanged(auth, async (user) => {
@@ -12,9 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("✅ ผู้ใช้ล็อกอินอยู่:", user.email);
 
       // แสดงอีเมล
-      if (userEmailElement) {
-        userEmailElement.textContent = `Email: ${user.email}`;
-      }
+      userEmailElement.textContent = `Email: ${user.email}`;
 
       // แสดงรูปโปรไฟล์ (ถ้ามี)
       if (user.photoURL && userInfoDiv) {
@@ -22,81 +22,12 @@ document.addEventListener("DOMContentLoaded", () => {
         userInfoDiv.classList.add("has-photo");
       }
 
-      // 🟢 ขอสิทธิ์และบันทึก Token ของ FCM
-      await registerFCMToken(user);
-
     } else {
       console.log("❌ ยังไม่ได้เข้าสู่ระบบ → กลับไปหน้า login");
-      window.location.href = "../Login/index.html";
+      window.location.href = "../Login/index.html"; 
     }
   });
-
-  // ปุ่มออกจากระบบ
-  const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      try {
-        await signOut(auth);
-        localStorage.removeItem("loggedInUser");
-        alert("ออกจากระบบเรียบร้อย");
-        window.location.href = "../Login/index.html";
-      } catch (error) {
-        console.error("ออกจากระบบไม่สำเร็จ:", error);
-      }
-    });
-  }
 });
-
-
-// -----------------------------------------------------------
-// 🧩 ฟังก์ชันสมัคร Token และบันทึกไปยัง Firestore
-// -----------------------------------------------------------
-async function registerFCMToken(user) {
-  try {
-    // ขอสิทธิ์แจ้งเตือน
-    const permission = await Notification.requestPermission();
-    if (permission !== "granted") {
-      console.warn("❌ ผู้ใช้ไม่อนุญาตให้แจ้งเตือน");
-      return;
-    }
-
-    // สมัคร Token จาก FCM
-    const token = await getToken(messaging, {
-      vapidKey: "BHdBib1-EiXQF4xJMzultOUr1Z4fygyM7kBHh8fweyW58tiZ7jjhQ1n1qQci0BWQ0BCwvkSpqrNY7nvhyb4SAQk"
-    });
-
-    if (token) {
-      console.log("✅ ได้รับ FCM Token:", token);
-
-      // สร้าง id ของอุปกรณ์ (กัน token ชนกัน)
-      const deviceId = `device_${Math.random().toString(36).substring(2, 10)}`;
-
-      // บันทึก Token ลง Firestore
-      await setDoc(doc(db, "Users", user.uid, "devices", deviceId), {
-        fcmToken: token,
-        userAgent: navigator.userAgent,
-        timestamp: new Date()
-      });
-
-      // ฟังข้อความขณะเว็บเปิดอยู่ (foreground message)
-      onMessage(messaging, (payload) => {
-        console.log("📩 ได้รับข้อความแจ้งเตือน:", payload);
-        new Notification(payload.notification.title, {
-          body: payload.notification.body,
-          icon: "/icon.png"
-        });
-      });
-
-    } else {
-      console.log("⚠️ ยังไม่ได้รับ token");
-    }
-
-  } catch (err) {
-    console.error("เกิดข้อผิดพลาดในการสมัคร FCM:", err);
-  }
-}
-
-
 
 // ปุ่มออกจากระบบ
 const logoutBtn = document.getElementById("logoutBtn");
@@ -1007,49 +938,6 @@ function setupEventListeners() {
 }
 
 
-// --- ปุ่มบันทึกการแจ้งเตือน ---
-const saveNotificationBtn = document.getElementById("saveNotificationSettings");
-if (saveNotificationBtn) {
-  saveNotificationBtn.addEventListener("click", saveNotificationSettings);
-}
-
-async function saveNotificationSettings() {
-  try {
-    // เก็บค่าการแจ้งเตือนก่อนเริ่ม
-    const beforeStartArr = [];
-    document.querySelectorAll("#beforeStartList .notification-item").forEach(item => {
-      const value = parseInt(item.querySelector("input").value);
-      const unit = item.querySelector("select").value;
-      beforeStartArr.push({ value, unit });
-    });
-
-    // เก็บค่าการแจ้งเตือนก่อนจบ
-    const beforeEndArr = [];
-    document.querySelectorAll("#beforeEndList .notification-item").forEach(item => {
-      const value = parseInt(item.querySelector("input").value);
-      const unit = item.querySelector("select").value;
-      beforeEndArr.push({ value, unit });
-    });
-
-    console.log("✅ บันทึกการแจ้งเตือนสำเร็จ:", {
-      beforeStart: beforeStartArr,
-      beforeEnd: beforeEndArr
-    });
-
-    // ปิด modal หลังบันทึก
-    document.getElementById("NotificationModal").classList.remove("active");
-
-    // ถ้านายอยากเชื่อมค่าพวกนี้เข้ากับกิจกรรมที่กำลังสร้าง
-    // ให้เก็บไว้ในตัวแปร global เช่น currentNotificationSettings
-    window.currentNotificationSettings = {
-      beforeStart: beforeStartArr,
-      beforeEnd: beforeEndArr
-    };
-
-  } catch (err) {
-    console.error("❌ เกิดข้อผิดพลาดตอนบันทึกการแจ้งเตือน:", err);
-  }
-}
 
 
 // เริ่มทำงานหลัง DOM โหลดครบ
