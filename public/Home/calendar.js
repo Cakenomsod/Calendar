@@ -14,7 +14,9 @@ async function requestNotificationPermission() {
       console.log('✅ ได้รับอนุญาตแจ้งเตือนแล้ว');
       
       // ลงทะเบียน Service Worker
-      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+      const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+        type: 'classic'
+      });      
       console.log('✅ Service Worker ลงทะเบียนสำเร็จ');
       
       // ขอ FCM token
